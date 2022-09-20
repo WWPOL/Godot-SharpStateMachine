@@ -5,6 +5,8 @@ using System.Linq;
 using System.Security.Cryptography.X509Certificates;
 using static CsharpVfsmPlugin;
 
+using GodotArray = Godot.Collections.Array;
+
 [Tool]
 public class VfsmStateNode : GraphNode
 {
@@ -60,6 +62,7 @@ public class VfsmStateNode : GraphNode
 
         // Clear slot nodes
         foreach (var child in this.GetChildNodes().Where(n => n.IsInGroup(VfsmConnectionNodeGroup))) {
+            DetachConnectionNode((VfsmStateNodeConnection)child);
             RemoveChild(child);
             child.QueueFree();
         }
@@ -70,7 +73,9 @@ public class VfsmStateNode : GraphNode
         foreach (var trigger in State.GetTriggers()) {
             var connectionNode = connectionScene.Instance<VfsmStateNodeConnection>()
                 .Init(trigger);
-            connectionNode.AddToGroup(VfsmConnectionNodeGroup);
+
+            AttachConnectionNode(connectionNode);
+
             AddChildBelowNode(belowNode, connectionNode);
             belowNode = connectionNode;
         }
@@ -96,6 +101,23 @@ public class VfsmStateNode : GraphNode
         }
                 
         return index;
+    }
+    
+    private void AttachConnectionNode(VfsmStateNodeConnection connectionNode)
+    {
+        connectionNode.AddToGroup(VfsmConnectionNodeGroup);
+        connectionNode.Connect(nameof(VfsmStateNodeConnection.DeleteRequested), this, nameof(On_ConnectionNode_DeleteRequested), new GodotArray(connectionNode));
+    }
+
+    private void DetachConnectionNode(VfsmStateNodeConnection connectionNode)
+    {
+        connectionNode.Disconnect(nameof(VfsmStateNodeConnection.DeleteRequested), this, nameof(On_ConnectionNode_DeleteRequested));
+    }
+
+    private void On_ConnectionNode_DeleteRequested(VfsmStateNodeConnection node)
+    {
+        State.RemoveTrigger(node.Trigger);
+        Machine.RemoveTransition(node.Trigger);
     }
     
     private void On_OffsetChanged()

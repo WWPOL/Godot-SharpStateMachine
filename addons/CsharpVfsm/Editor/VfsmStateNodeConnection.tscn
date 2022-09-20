@@ -35,7 +35,7 @@ size_flags_vertical = 3
 margin_right = 46.0
 margin_bottom = 36.0
 
-[node name="RemoveButton" type="Button" parent="HBoxContainer/PanelContainer"]
+[node name="DeleteButton" type="Button" parent="HBoxContainer/PanelContainer"]
 unique_name_in_owner = true
 margin_left = 7.5
 margin_top = 5.0

@@ -1,4 +1,4 @@
-[gd_scene load_steps=21 format=2]
+[gd_scene load_steps=17 format=2]
 
 [ext_resource path="res://addons/CsharpVfsm/VisualStateMachine.cs" type="Script" id=1]
 [ext_resource path="res://addons/CsharpVfsm/StateMachine/VfsmStateMachine.cs" type="Script" id=2]
@@ -11,38 +11,14 @@ script = ExtResource( 4 )
 Kind = 1
 Duration = 1.2
 
-[sub_resource type="Resource" id=6]
-resource_local_to_scene = true
-script = ExtResource( 4 )
-Kind = 1
-Duration = 0.5
-
 [sub_resource type="Resource" id=2]
 resource_local_to_scene = true
 script = ExtResource( 3 )
 Name = "Foobar"
 TargetPath = NodePath("")
 ProcessFunction = null
-Position = Vector2( 520, 1680 )
-Triggers = [ SubResource( 1 ), SubResource( 6 ) ]
-
-[sub_resource type="Resource" id=7]
-resource_local_to_scene = true
-script = ExtResource( 4 )
-Kind = 1
-Duration = 0.5
-
-[sub_resource type="Resource" id=25]
-resource_local_to_scene = true
-script = ExtResource( 4 )
-Kind = 1
-Duration = 0.5
-
-[sub_resource type="Resource" id=26]
-resource_local_to_scene = true
-script = ExtResource( 4 )
-Kind = 1
-Duration = 0.5
+Position = Vector2( 480, 1560 )
+Triggers = [ SubResource( 1 ) ]
 
 [sub_resource type="Resource" id=3]
 resource_local_to_scene = true
@@ -50,8 +26,8 @@ script = ExtResource( 3 )
 Name = "State"
 TargetPath = NodePath("")
 ProcessFunction = null
-Position = Vector2( 960, 1500 )
-Triggers = [ SubResource( 7 ), SubResource( 25 ), SubResource( 26 ) ]
+Position = Vector2( 820, 1340 )
+Triggers = [  ]
 
 [sub_resource type="Resource" id=9]
 resource_local_to_scene = true
@@ -59,7 +35,7 @@ script = ExtResource( 3 )
 Name = "State22"
 TargetPath = NodePath("")
 ProcessFunction = null
-Position = Vector2( 1440, 1620 )
+Position = Vector2( 1180, 1500 )
 Triggers = [  ]
 
 [sub_resource type="Resource" id=4]
@@ -67,8 +43,7 @@ resource_local_to_scene = true
 script = ExtResource( 2 )
 States = [ SubResource( 2 ), SubResource( 3 ), SubResource( 9 ) ]
 Transitions = {
-SubResource( 1 ): SubResource( 3 ),
-SubResource( 7 ): SubResource( 2 )
+SubResource( 1 ): SubResource( 3 )
 }
 
 [sub_resource type="Resource" id=22]
