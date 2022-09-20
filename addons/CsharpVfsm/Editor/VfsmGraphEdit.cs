@@ -24,6 +24,8 @@ public class VfsmGraphEdit : GraphEdit
         Connect("connection_request", this, nameof(On_ConnectionRequest));
         Connect("delete_nodes_request", this, nameof(On_DeleteNodesRequest));
         Connect("gui_input", this, nameof(_UnhandledInput));
+        Connect("node_selected", this, nameof(On_NodeSelected));
+        Connect("node_unselected", this, nameof(On_NodeDeselected));
         Connect("popup_request", this, nameof(On_PopupRequest));
         
         ProcessToggle = GetNode<CheckBox>("%ProcessToggle");
@@ -52,7 +54,7 @@ public class VfsmGraphEdit : GraphEdit
     {
         PluginTraceEnter();
         
-        if (MachineNode is not null) {
+        if (MachineNode is not null && IsInstanceValid(MachineNode)) {
             MachineNode.Disconnect(nameof(VisualStateMachine.Transitioned), this, nameof(On_MachineNode_Transitioned));
             Machine!.Disconnect("changed", this, nameof(On_Machine_Changed));
         }
@@ -76,14 +78,13 @@ public class VfsmGraphEdit : GraphEdit
         Redraw();
     }
     
-    private void On_MachineNode_Transitioned(VfsmState from, VfsmState to)
+    private void On_MachineNode_Transitioned(VfsmState? from, VfsmState to)
     {
-        GetNodeForState(from).Overlay = GraphNode.OverlayEnum.Disabled;
+        if (from is not null) {
+            GetNodeForState(from).Overlay = GraphNode.OverlayEnum.Disabled;
+        }
         GetNodeForState(to).Overlay = GraphNode.OverlayEnum.Breakpoint;
     }
-    
-    private IEnumerable<VfsmStateNode> SelectedNodes
-        => this.GetChildNodes().Where(f => f is VfsmStateNode node && node.Selected).Cast<VfsmStateNode>();
     
     private void Redraw()
     {
@@ -99,9 +100,9 @@ public class VfsmGraphEdit : GraphEdit
         ClearConnections();
 
         // Delete all graph nodes
-        foreach (var node in GetChildren().Cast<Node>().Where(t => t is VfsmStateNode)) {
-            if (((VfsmStateNode)node).Selected) {
-                selectedStates.Add(((VfsmStateNode)node).State);
+        foreach (var node in StateNodes) {
+            if (node.Selected) {
+                selectedStates.Add(node.State);
             }
             RemoveChild(node);
             node.QueueFree();
@@ -109,44 +110,75 @@ public class VfsmGraphEdit : GraphEdit
         
         PluginTrace("Drawing graph!");
         
+        VfsmStateNodeSpecial? entryNode = null;
+        StateNode? entryTransitionTarget = null;
+        
         // Create a graph node for each state
+        var stateNodeSpecialScene = GD.Load<PackedScene>(PluginResourcePath("Editor/VfsmStateNodeSpecial.tscn"));
         var stateNodeScene = GD.Load<PackedScene>(PluginResourcePath("Editor/VfsmStateNode.tscn"));
         foreach (var state in Machine.GetStates()) {
-            var stateNode = stateNodeScene.Instance<VfsmStateNode>()
-                .Init(state, Machine);
+            PluginTrace($"Creating state node for {state.Name}");
+            // Create a new node based on whether the state is special
+            StateNode stateNode;
+            if (state is VfsmStateSpecial special) {
+                stateNode = stateNodeSpecialScene.Instance<VfsmStateNodeSpecial>()
+                        .Init(special, Machine);
+                
+                if (special.SpecialKind is VfsmStateSpecial.Kind.Entry) {
+                    entryNode = (VfsmStateNodeSpecial)stateNode;
+                }
+            } else {
+                stateNode = stateNodeScene.Instance<VfsmStateNode>()
+                        .Init(state, Machine);
+            }
+
             AddChild(stateNode);
+
             stateNode.Redraw();
 
             // Reapply selection
             if (selectedStates.Contains(state)) {
                 stateNode.Selected = true;
             }
+            
+            if (Machine.EntryTransitionState == state) {
+                entryTransitionTarget = stateNode;
+            }
         }
         
         Machine.Clean();
         
+        PluginTrace("Drawing transitions");
+        
         // Draw state transition connections.
+        if (entryNode is not null && entryTransitionTarget is not null) {
+            ConnectNode(entryNode.Name, 0, entryTransitionTarget.Name, 0);
+        }
         foreach (var state in Machine.GetStates()) {
             foreach (var trigger in state.GetTriggers()) {
                 if (Machine.GetTransitions().ContainsKey(trigger)) {
                     var fromNode = GetNodeForState(state);
                     var toNode = GetNodeForState(Machine.GetTransitions()[trigger]);
-                    var fromIndex = fromNode.SlotIndexOfTrigger(trigger);
-                    ConnectNode(fromNode.Name, fromIndex, toNode.Name, 0);
+                    if (state is VfsmStateSpecial) {
+                        ConnectNode(fromNode.Name, 0, toNode.Name, 0);
+                    } else {
+                        var fromIndex = ((VfsmStateNode)fromNode).SlotIndexOfTrigger(trigger);
+                        ConnectNode(fromNode.Name, fromIndex, toNode.Name, 0);
+                    }
                 } 
             }
         }
+        
+        PluginTrace("Finished drawing graph.");
     }
     
-    private VfsmStateNode GetNodeForState(VfsmState state)
-    {
-        var child = GetChildren().Cast<Node>()
-            .Where(n => n is VfsmStateNode).Cast<VfsmStateNode>()
-            .FirstOrDefault(n => n.State == state);
-        if (child is null)
-            throw new ArgumentException($"No node found for state \"{state}\"");
-        return child;
-    }
+    private StateNode GetNodeForState(VfsmState state)
+        => StateNodes.First(n => n.State == state);
+    
+    private IEnumerable<StateNode> StateNodes
+        => this.GetChildNodes().Where(n => n is StateNode).Cast<StateNode>();
+    private IEnumerable<StateNode> SelectedNodes
+        => StateNodes.Where(n => n.Selected);
 
     private void On_PopupRequest(Vector2 position)
     {
@@ -160,19 +192,29 @@ public class VfsmGraphEdit : GraphEdit
         var fromNode = GetNode(from);
         var toNode = GetNode(to);
         
-        var fromChildren = fromNode.GetChildNodes().Where(n => n.IsInGroup(VfsmStateNode.VfsmConnectionNodeGroup)).ToList();
-        if (fromChildren.Count() < fromSlot - 1) {
-            GD.PushError($"Attempted to connect from an invalid port (index {fromSlot})");
-            return;
-        }
+        if (fromNode is VfsmStateNodeSpecial special) {
+            if (special.SpecialState.SpecialKind is VfsmStateSpecial.Kind.Entry) {
+                // Manually assign the entry state
+                Machine!.EntryTransitionState = ((StateNode)toNode).State;  
+            }
+        } else {
+            // Create the trigger entry within the machine
+            var fromChildren = fromNode.GetChildNodes().Where(n => n.IsInGroup(VfsmStateNode.VfsmConnectionNodeGroup)).ToList();
+            if (fromChildren.Count() < fromSlot - 1) {
+                GD.PushError($"Attempted to connect from an invalid port (index {fromSlot})");
+                return;
+            }
 
-        var toTriggerNode = fromChildren[fromSlot];
-        if (toTriggerNode is not VfsmStateNodeConnection) {
-            GD.PushError($"Attempted to connect from a slot that is not of type {nameof(VfsmStateNodeConnection)}");
-            return;
-        }
+            var toTriggerNode = fromChildren[fromSlot];
+            if (toTriggerNode is not VfsmStateNodeConnection) {
+                GD.PushError($"Attempted to connect from a slot that is not of type {nameof(VfsmStateNodeConnection)}");
+                return;
+            }
+
+            var trigger = ((VfsmStateNodeConnection)toTriggerNode).Trigger;
         
-        Machine!.AddTransition(((VfsmStateNodeConnection)toTriggerNode).Trigger, ((VfsmStateNode)toNode).State);
+            Machine!.AddTransition(trigger, ((StateNode)toNode).State);
+        }
     }
     
     private void On_BeginNodeMove()
@@ -187,11 +229,30 @@ public class VfsmGraphEdit : GraphEdit
         Redraw();
     }
     
+    private void On_NodeSelected(Node node)
+    {
+        PluginTrace(node);
+        if (node is StateNode stateNode) {
+            CsharpVfsmEventBus.Bus.EmitSignal(
+                nameof(CsharpVfsmEventBus.ResourceInspectRequested), 
+                stateNode.State);
+        } 
+    }
+    
+    private void On_NodeDeselected(Node _)
+    {
+        if (SelectedNodes.Count() == 0) {
+            CsharpVfsmEventBus.Bus.EmitSignal(
+                nameof(CsharpVfsmEventBus.ResourceInspectRequested),
+                Machine);
+        }
+    }
+    
     private void On_DeleteNodesRequest(GodotArray _)
     {
         // The nodes passed in here will exclude any nodes without a "close" button (like ours).
         // We need to manually delete every selected node.
-        foreach (var node in this.GetChildNodes().Where(n => n is VfsmStateNode).Cast<VfsmStateNode>()) {
+        foreach (var node in StateNodes) {
             if (node.Selected) {
                 Machine!.RemoveState(node.State);
             }
@@ -209,12 +270,7 @@ public class VfsmGraphEdit : GraphEdit
     private void On_ProcessToggle_Toggled(bool toggled)
     {
         if (toggled) {
-            if (SelectedNodes.Count() == 0) {
-                ProcessToggle.Pressed = false;
-                return;
-            }
-            
-            MachineNode!.ChangeToState(SelectedNodes.First().State);
+            MachineNode!.Start();
             MachineNode!.EditorProcess = true;
         } else {
             MachineNode!.EditorProcess = false;
@@ -223,18 +279,27 @@ public class VfsmGraphEdit : GraphEdit
 
     private void AddEntryNode()
     {
+        var entry = VfsmStateSpecial.Default();
+        entry.SpecialKind = VfsmStateSpecial.Kind.Entry;
+        AddStateNode(entry);
     }
     
     private void AddExitNode()
     {
+        var exit = VfsmStateSpecial.Default();
+        exit.SpecialKind = VfsmStateSpecial.Kind.Exit;
+        AddStateNode(exit);
     }
     
-    private void AddStateNode()
+    private void AddStateNode(VfsmState? state = null)
     {
         if (Machine is null)
             throw new NullReferenceException("Attempted to perform node operation with a null machine");
 
-        var state = VfsmState.Default();
+        if (state is null) {
+            state = VfsmState.Default();
+        }
+
         state.Position = ScreenToGraphOffset(Popup.RectGlobalPosition);
 
         Machine.AddState(state);

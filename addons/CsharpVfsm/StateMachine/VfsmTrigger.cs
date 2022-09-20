@@ -58,42 +58,21 @@ public class VfsmTrigger : Resource
     }
 
     public override GodotArray _GetPropertyList()
-    {
-        var kindEnumHintString = Enum.GetValues(typeof(TriggerKind)).Cast<TriggerKind>().Aggregate("", (str, next) => $"{str}{next}:{(int)next},");
-        kindEnumHintString = kindEnumHintString.Remove(kindEnumHintString.Length - 1, 1);
-
-        var props = new GodotArray {
-            MakeProperty(
+        => new() {
+            PluginUtil.MakeProperty(
                 nameof(Kind),
                 Variant.Type.Int,
                 PropertyUsageFlags.Default,
                 PropertyHint.Enum,
-                kindEnumHintString),
-            MakeProperty(
+                PluginUtil.EnumHintString<TriggerKind>()
+            ),
+            PluginUtil.MakeProperty(
                 nameof(Duration),
                 Variant.Type.Real,
-                Kind is TriggerKind.Timer ? PropertyUsageFlags.Default : PropertyUsageFlags.Storage)
+                Kind is TriggerKind.Timer ? PropertyUsageFlags.Default : PropertyUsageFlags.Storage
+            )
         };
 
-        return props;
-    }
-
-    private static GodotDictionary MakeProperty(
-            string name,
-            Variant.Type type,
-            PropertyUsageFlags usage = PropertyUsageFlags.Default,
-            PropertyHint hint = PropertyHint.None,
-            string? hintString = "")
-    {
-        return new GodotDictionary {
-            ["name"] = name,
-            ["type"] = type,
-            ["usage"] = usage,
-            ["hint"] = hint,
-            ["hint_string"] = hintString
-        };
-    }
-    
     private void EmitParentChanged()
         => EmitSignal(nameof(ParentChanged));
 

@@ -15,7 +15,7 @@ border_width_left = 1
 border_width_top = 1
 border_width_right = 1
 border_width_bottom = 1
-border_color = Color( 0.4, 0.4225, 0.4825, 1 )
+border_color = Color( 1, 1, 1, 1 )
 shadow_color = Color( 0, 0, 0, 0.3 )
 shadow_size = 5
 

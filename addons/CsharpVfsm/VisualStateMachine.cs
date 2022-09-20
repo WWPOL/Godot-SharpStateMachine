@@ -1,3 +1,4 @@
+using System.Transactions;
 using System;
 using System.Linq;
 using Godot;
@@ -39,7 +40,7 @@ public class VisualStateMachine : Node
             Machine = VfsmStateMachine.Default();
         }
         
-        Machine.Init();
+        Machine.Init(this);
     }
 
     public override void _Process(float delta)
@@ -50,14 +51,20 @@ public class VisualStateMachine : Node
         void ProcessMachineState() {
             if (CurrentState is null)
                 return;
+                
+            if (CurrentState is VfsmStateSpecial special) {
+                if (special.SpecialKind is VfsmStateSpecial.Kind.Entry
+                    && Machine.EntryTransitionState is not null) {
+                    ChangeToState(Machine.EntryTransitionState);
+                    return;
+                }
+            }
             
             if (CurrentState.Process is not null) {
                 CurrentState.Process(delta);
             }
 
-            foreach (var trigger in CurrentState.GetTriggers()) {
-                trigger.Update(delta);
-            }
+            CurrentState.UpdateTriggers(delta);
         }
         
         ProcessMachineState();
@@ -74,22 +81,42 @@ public class VisualStateMachine : Node
         
         PluginTraceExit();
     }
+        
+    public void Start()
+    {
+        if (Machine.EntryTransitionState is null) {
+            GD.PushWarning("Unable to start the FSM because no entry transition was found"); 
+            return;
+        }
+        
+        Reset();
+        ChangeToState(Machine.EntryTransitionState);
+    }
     
-    public void ChangeToState(VfsmState to)
+    public void ChangeToState(VfsmState to, bool force = false)
     {
         PluginTraceEnter();
-
+    
+        if (CurrentState is not null && !Machine.StateHasTransition(CurrentState, to) && !force) {
+            GD.PushWarning($"Attempted to perform invalid state transition from \"{CurrentState.Name}\" to \"{to.Name}\"");
+            return;
+        }
+        
+        PluginTrace("Performing state OnLeave");
+        
         // Detach from current state's triggers
         if (CurrentState is not null) {
             foreach (var trigger in CurrentState!.GetTriggers()) {
                 trigger.Disconnect(nameof(VfsmTrigger.Triggered), this, nameof(On_StateTransitionTriggered));
+                trigger.Reset();
             }
 
-            // Perform the OnLeave
             if (CurrentState.OnLeave is not null) {
                 CurrentState.OnLeave();
             }
         }
+        
+        PluginTrace($"Transitioning to {to.Name}");
         
         // Do the transition.
         var previousState = CurrentState;
@@ -97,14 +124,32 @@ public class VisualStateMachine : Node
         if (CurrentState.OnEnter is not null) {
             CurrentState.OnEnter();
         }
-
-        // Attach to next state's triggers.
-        foreach (var trigger in CurrentState!.GetTriggers()) {
-            trigger.Connect(nameof(VfsmTrigger.Triggered), this, nameof(On_StateTransitionTriggered), new GodotArray(trigger));
+        
+        if (CurrentState is not VfsmStateSpecial) {
+            PluginTrace("e");
+            // Attach to next state's triggers.
+            foreach (var trigger in CurrentState!.GetTriggers()) {
+                trigger.Connect(nameof(VfsmTrigger.Triggered), this, nameof(On_StateTransitionTriggered), new GodotArray(trigger));
+            }
         }
         
         EmitSignal(nameof(Transitioned), previousState, CurrentState);
         
         PluginTraceExit();
+    }
+    
+    public void Reset()
+    {
+        foreach (var t in Machine.GetTransitions().Keys) {
+            t.Reset();
+        }
+        
+        if (CurrentState is not null) {
+            foreach (var trigger in CurrentState.GetTriggers()) {
+                trigger.Disconnect(nameof(VfsmTrigger.Triggered), this, nameof(On_StateTransitionTriggered));
+            }
+        }
+        
+        CurrentState = null;
     }
 }

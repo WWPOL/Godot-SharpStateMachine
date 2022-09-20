@@ -2,9 +2,11 @@ using Godot;
 using System;
 using System.Linq;
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
 
 using static CsharpVfsmPlugin;
-using System.Text.RegularExpressions;
+
+using GodotArray = Godot.Collections.Array;
 
 [Tool]
 public class VfsmState : Resource
@@ -13,9 +15,9 @@ public class VfsmState : Resource
 
 #region Exports
 
+    //[Export]
     private string _name = "State";
-    [Export]
-    public string Name {
+    public virtual string Name {
         get => _name;
         set {
             if (ValidateStateName(value)) {
@@ -27,8 +29,8 @@ public class VfsmState : Resource
         }
     }
     
+    //[Export]
     private NodePath _targetPath = null!;
-    [Export]
     public NodePath TargetPath {
         get => _targetPath;
         set {
@@ -38,8 +40,8 @@ public class VfsmState : Resource
         }
     }
 
-    private string _processFunction = null!;
-    [Export]
+    //[Export]
+    private string _processFunction = "";
     public string ProcessFunction {
         get => _processFunction;
         set {
@@ -49,8 +51,8 @@ public class VfsmState : Resource
         }
     }
     
+    //[Export]
     private Vector2 _position = new(0, 0);
-    [Export]
     public Vector2 Position {
         get =>_position;
         set {
@@ -61,8 +63,8 @@ public class VfsmState : Resource
         }
     }
     
-    [Export]
-    private List<VfsmTrigger> Triggers = new();
+    //[Export]
+    protected List<VfsmTrigger> Triggers = new();
 
 #endregion
     
@@ -71,18 +73,21 @@ public class VfsmState : Resource
 
     private Node? Target;
 
-    public VfsmState Init(Node parent)
+    public virtual VfsmState Init()
     {
-        Target = parent.GetNode(TargetPath);
-        var methods = Target.GetType().GetMethods();
+        if (!TargetPath.IsEmpty() && !ProcessFunction.Empty() && GetLocalScene() is not null) {
+            Target = GetLocalScene().GetNode(TargetPath);
+            var methods = Target.GetType().GetMethods();
+            
+            PluginTrace($"{TargetPath}: {Target.GetType()}");
 
-        if (ProcessFunction is not null) {
-            if (methods.Select(m => m.Name).Contains(ProcessFunction)) {
+            if (Target.GetType().GetMethods().Select(m => m.Name).Contains(ProcessFunction)) {
                 var parameters = methods.First(m => m.Name == ProcessFunction).GetParameters();
                 if (parameters.Count() != 1 || parameters[0].ParameterType != typeof(float)) {
                     GD.PushWarning($"Invalid parameters for process function {ProcessFunction}");
                 } else {
-                    Process = (Action<float>)Target.GetType().GetMethod(ProcessFunction).CreateDelegate(typeof(Action<float>));
+                    var method = Target.GetType().GetMethod(ProcessFunction);
+                    Process = (Action<float>)Delegate.CreateDelegate(typeof(Action<float>), Target, method);
                 }
             } else {
                 GD.PushWarning($"Process function \"{ProcessFunction}\" not found");
@@ -98,7 +103,7 @@ public class VfsmState : Resource
     public Action? OnEnter { get; init ;}
     public Action? OnLeave { get; init; }
     
-    public void AddTrigger(VfsmTrigger trigger)
+    public virtual void AddTrigger(VfsmTrigger trigger)
     {
         PluginTraceEnter();
 
@@ -109,7 +114,7 @@ public class VfsmState : Resource
         PluginTraceExit();
     }
     
-    public bool RemoveTrigger(VfsmTrigger trigger)
+    public virtual bool RemoveTrigger(VfsmTrigger trigger)
     {
         if (Triggers.Remove(trigger)) {
             EmitChanged();
@@ -120,7 +125,13 @@ public class VfsmState : Resource
         return false;
     }
     
-    public IList<VfsmTrigger> GetTriggers() => Triggers.AsReadOnly();
+    public virtual void UpdateTriggers(float delta) {
+        foreach (var trigger in GetTriggers()) {
+            trigger.Update(delta);
+        }
+    }
+    
+    public virtual IList<VfsmTrigger> GetTriggers() => Triggers.AsReadOnly();
     
     private void EmitParentChanged() {
         PluginTrace("Emitting to parent");
@@ -129,6 +140,32 @@ public class VfsmState : Resource
     
     public static bool ValidateStateName(string name) {
         return Regex.IsMatch(name, "[_A-Za-z0-9]+");
+    }
+    
+    public override GodotArray _GetPropertyList()
+    {
+        return new GodotArray(
+            PluginUtil.MakeProperty(
+                nameof(Name),
+                Variant.Type.String
+            ),
+            PluginUtil.MakeProperty(
+                nameof(TargetPath),
+                Variant.Type.NodePath
+            ),
+            PluginUtil.MakeProperty(
+                nameof(ProcessFunction),
+                Variant.Type.String
+            ),
+            PluginUtil.MakeProperty(
+                nameof(Position),
+                Variant.Type.Vector2
+            ),
+            PluginUtil.MakeProperty(
+                nameof(Triggers),
+                Variant.Type.Array
+            )
+        );
     }
     
     public const string DefaultName = "State";

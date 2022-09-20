@@ -1,14 +1,12 @@
 using Godot;
 using System;
-using System.ComponentModel;
 using System.Linq;
-using System.Security.Cryptography.X509Certificates;
 using static CsharpVfsmPlugin;
 
 using GodotArray = Godot.Collections.Array;
 
 [Tool]
-public class VfsmStateNode : GraphNode
+public class VfsmStateNode : StateNode
 {
     public const string VfsmConnectionNodeGroup = "__vfsm_connection";
 
@@ -18,7 +16,7 @@ public class VfsmStateNode : GraphNode
     private Button NewTriggerButton = null!;
 
     private VfsmStateMachine Machine = null!;
-    public VfsmState State { get; private set; } = null!;
+    public override VfsmState State { get; set; } = null!;
     
     public VfsmStateNode()
     {
@@ -43,8 +41,8 @@ public class VfsmStateNode : GraphNode
     
     public override void _Ready()
     {
-        Connect("offset_changed", this, nameof(On_OffsetChanged));
-        
+        base._Ready();
+
         NameEdit = GetNode<LineEdit>("NameEdit");
         NewTriggerButton = GetNode<Button>("NewTriggerButton");
 
@@ -55,7 +53,7 @@ public class VfsmStateNode : GraphNode
     }
 
     /// Populates the contents of this control.
-    public void Redraw()
+    public override void Redraw()
     {
         // Update name
         NameEdit.Text = State.Name; 
@@ -118,12 +116,6 @@ public class VfsmStateNode : GraphNode
     {
         State.RemoveTrigger(node.Trigger);
         Machine.RemoveTransition(node.Trigger);
-    }
-    
-    private void On_OffsetChanged()
-    {
-        PluginTrace($"Dragged to {Offset}"); 
-        State.Position = Offset;
     }
     
     private void On_NameEdit_TextEntered(string newText)

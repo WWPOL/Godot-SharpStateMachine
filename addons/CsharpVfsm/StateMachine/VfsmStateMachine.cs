@@ -6,8 +6,7 @@ using System.Reactive.Linq;
 using System.Collections.Immutable;
 
 using static CsharpVfsmPlugin;
-using Microsoft.SqlServer.Server;
-using System.Net.NetworkInformation;
+using System.Data.Common;
 
 /// The static data of a VFSM state machine, including states and transitions.
 [Tool]
@@ -19,24 +18,52 @@ public class VfsmStateMachine : Resource
     [Export]
     private readonly Dictionary<VfsmTrigger, VfsmState> Transitions = new();
     
+    private VfsmState? _entryTransitionState = null;
+    [Export]
+    public VfsmState? EntryTransitionState {
+        get => _entryTransitionState;
+        set {
+            _entryTransitionState = value;
+            EmitChanged();
+            PropertyListChangedNotify();
+        }
+    }
+    
     public static VfsmStateMachine Default()
         => (VfsmStateMachine)GD.Load<VfsmStateMachine>(PluginResourcePath("Resources/vfsm_state_machine.tres")).Duplicate();
     
     public bool IgnoreChildChanges = false;
     
-    public void Init()
+    public virtual void Init(VisualStateMachine machineNode)
     {
+        PluginTraceEnter();
+
         PluginTrace($"Initializing with {States.Count} states");
-        States.ForEach(c => AttachChild(c, nameof(VfsmState.ParentChanged)));
+        foreach (var state in States) {
+            state.Init();
+            AttachChild(state, nameof(VfsmState.ParentChanged));
+        }
         Transitions.Keys.ToList().ForEach(c => AttachChild(c, nameof(VfsmTrigger.ParentChanged)));
+        
+        PluginTraceExit();
     }
     
     public void AddState(VfsmState state)
     {
+        PluginTraceEnter();
+
+        // Ensure we don't add a duplicate special state
+        if (state is VfsmStateSpecial special && HasSpecialState(special.SpecialKind)) {
+            GD.PushWarning($"Cannot add another state of special kind {special.SpecialKind}");
+            return;
+        }
+
         States.Add(state);
         AttachChild(state, nameof(VfsmState.ParentChanged));
         EmitChanged();
         PropertyListChangedNotify();
+        
+        PluginTraceExit();
     }
     
     public bool RemoveState(VfsmState state)
@@ -89,6 +116,11 @@ public class VfsmStateMachine : Resource
     
     public IList<VfsmState> GetStates() => States.Cast<VfsmState>().ToList().AsReadOnly();
     public IDictionary<VfsmTrigger, VfsmState> GetTransitions() => Transitions.ToImmutableDictionary();
+    public bool HasSpecialState(VfsmStateSpecial.Kind kind) => GetStates().Any(s => s is VfsmStateSpecial special && special.SpecialKind == kind);
+
+    public bool StateHasTransition(VfsmState from, VfsmState to)
+        => (from is VfsmStateSpecial special && special.SpecialKind is VfsmStateSpecial.Kind.Entry && EntryTransitionState == to)
+            ||  GetTransitions().Any(kv => from.GetTriggers().Contains(kv.Key) && kv.Value == to);
     
     /// Attempts to rectify any invalid data in the machine, such as triggers with deleted targets.
     public void Clean()
@@ -157,7 +189,9 @@ public class VfsmStateMachine : Resource
     
     private void AttachChild(Godot.Object child, string signal)
     {
-        child.Connect(signal, this, nameof(ChildChanged));
+        if (!child.IsConnected(signal, this, nameof(ChildChanged))) {
+            child.Connect(signal, this, nameof(ChildChanged));
+        }
     }
     
     private void DetachChild(Godot.Object child, string signal)

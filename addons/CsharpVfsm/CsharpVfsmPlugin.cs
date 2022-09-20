@@ -29,6 +29,13 @@ public class CsharpVfsmPlugin : EditorPlugin
             GD.Load<Script>(PluginResourcePath("StateMachine/VfsmState.cs")),
             null
         );
+
+        AddCustomType(
+            nameof(VfsmStateSpecial),
+            nameof(VfsmState),
+            GD.Load<Script>(PluginResourcePath("StateMachine/VfsmStateSpecial.cs")),
+            null
+        );
         
         AddCustomType(
             nameof(VfsmTrigger),
@@ -117,7 +124,7 @@ public class CsharpVfsmPlugin : EditorPlugin
     
     [Conditional("VFSM_DEVELOP")]
     public static void PluginTrace(
-            string message,
+            object message,
             [CallerFilePath] string file = "",
             [CallerMemberName] string member = "")
     {
