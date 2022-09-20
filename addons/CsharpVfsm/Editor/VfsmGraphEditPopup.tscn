@@ -1,0 +1,15 @@
+[gd_scene load_steps=5 format=2]
+
+[ext_resource path="res://addons/CsharpVfsm/Editor/VfsmGraphEditPopup.cs" type="Script" id=1]
+[ext_resource path="res://addons/CsharpVfsm/Assets/state.svg" type="Texture" id=2]
+[ext_resource path="res://addons/CsharpVfsm/Assets/exit.svg" type="Texture" id=3]
+[ext_resource path="res://addons/CsharpVfsm/Assets/entry.svg" type="Texture" id=4]
+
+[node name="Control" type="PopupMenu"]
+margin_right = 20.0
+margin_bottom = 20.0
+rect_min_size = Vector2( 70, 0 )
+size_flags_horizontal = 3
+size_flags_vertical = 3
+items = [ "Entry", ExtResource( 4 ), 0, false, false, 0, 0, null, "", false, "Exit", ExtResource( 3 ), 0, false, false, 1, 0, null, "", false, "State", ExtResource( 2 ), 0, false, false, 2, 0, null, "", false ]
+script = ExtResource( 1 )

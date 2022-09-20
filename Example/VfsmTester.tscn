@@ -1,0 +1,147 @@
+[gd_scene load_steps=21 format=2]
+
+[ext_resource path="res://addons/CsharpVfsm/VisualStateMachine.cs" type="Script" id=1]
+[ext_resource path="res://addons/CsharpVfsm/StateMachine/VfsmStateMachine.cs" type="Script" id=2]
+[ext_resource path="res://addons/CsharpVfsm/StateMachine/VfsmState.cs" type="Script" id=3]
+[ext_resource path="res://addons/CsharpVfsm/StateMachine/VfsmTrigger.cs" type="Script" id=4]
+
+[sub_resource type="Resource" id=1]
+resource_local_to_scene = true
+script = ExtResource( 4 )
+Kind = 1
+Duration = 1.2
+
+[sub_resource type="Resource" id=6]
+resource_local_to_scene = true
+script = ExtResource( 4 )
+Kind = 1
+Duration = 0.5
+
+[sub_resource type="Resource" id=2]
+resource_local_to_scene = true
+script = ExtResource( 3 )
+Name = "Foobar"
+TargetPath = NodePath("")
+ProcessFunction = null
+Position = Vector2( 640, 1780 )
+Triggers = [ SubResource( 1 ), SubResource( 6 ) ]
+
+[sub_resource type="Resource" id=7]
+resource_local_to_scene = true
+script = ExtResource( 4 )
+Kind = 1
+Duration = 0.5
+
+[sub_resource type="Resource" id=3]
+resource_local_to_scene = true
+script = ExtResource( 3 )
+Name = "State"
+TargetPath = NodePath("")
+ProcessFunction = null
+Position = Vector2( 1100, 1480 )
+Triggers = [ SubResource( 7 ) ]
+
+[sub_resource type="Resource" id=5]
+resource_local_to_scene = true
+script = ExtResource( 3 )
+Name = "State2"
+TargetPath = NodePath("")
+ProcessFunction = null
+Position = Vector2( 440, 160 )
+Triggers = [  ]
+
+[sub_resource type="Resource" id=9]
+resource_local_to_scene = true
+script = ExtResource( 3 )
+Name = "State22"
+TargetPath = NodePath("")
+ProcessFunction = null
+Position = Vector2( 1940, 1820 )
+Triggers = [  ]
+
+[sub_resource type="Resource" id=10]
+resource_local_to_scene = true
+script = ExtResource( 3 )
+Name = "State222"
+TargetPath = NodePath("")
+ProcessFunction = null
+Position = Vector2( 2040, 1800 )
+Triggers = [  ]
+
+[sub_resource type="Resource" id=20]
+resource_local_to_scene = true
+script = ExtResource( 3 )
+Name = "State2222"
+TargetPath = NodePath("")
+ProcessFunction = null
+Position = Vector2( -11.0955, -184.723 )
+Triggers = [  ]
+
+[sub_resource type="Resource" id=4]
+resource_local_to_scene = true
+script = ExtResource( 2 )
+States = [ SubResource( 2 ), SubResource( 3 ), SubResource( 5 ), SubResource( 9 ), SubResource( 10 ), SubResource( 20 ) ]
+Transitions = {
+SubResource( 1 ): SubResource( 3 ),
+SubResource( 7 ): SubResource( 2 )
+}
+
+[sub_resource type="Resource" id=22]
+resource_local_to_scene = true
+script = ExtResource( 2 )
+States = [  ]
+Transitions = {
+}
+
+[sub_resource type="Resource" id=23]
+resource_local_to_scene = true
+script = ExtResource( 4 )
+Kind = 1
+Duration = 0.5
+
+[sub_resource type="Resource" id=24]
+resource_local_to_scene = true
+script = ExtResource( 4 )
+Kind = 1
+Duration = 0.5
+
+[sub_resource type="Resource" id=13]
+resource_local_to_scene = true
+script = ExtResource( 3 )
+Name = "State"
+TargetPath = NodePath("")
+ProcessFunction = null
+Position = Vector2( 580, 900 )
+Triggers = [ SubResource( 23 ), SubResource( 24 ) ]
+
+[sub_resource type="Resource" id=19]
+resource_local_to_scene = true
+script = ExtResource( 3 )
+Name = "State"
+TargetPath = NodePath("")
+ProcessFunction = null
+Position = Vector2( 31.7428, -336.221 )
+Triggers = [  ]
+
+[sub_resource type="Resource" id=12]
+resource_local_to_scene = true
+script = ExtResource( 2 )
+States = [ SubResource( 13 ), SubResource( 19 ) ]
+Transitions = {
+}
+
+[node name="Control" type="Control"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+
+[node name="VisualStateMachine" type="Node" parent="."]
+script = ExtResource( 1 )
+_machine = SubResource( 4 )
+
+[node name="VisualStateMachine3" type="Node" parent="."]
+script = ExtResource( 1 )
+_machine = SubResource( 22 )
+
+[node name="VisualStateMachine2" type="Node" parent="."]
+script = ExtResource( 1 )
+_machine = SubResource( 12 )
