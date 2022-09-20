@@ -15,7 +15,7 @@ config/icon="res://icon.png"
 
 [editor_plugins]
 
-enabled=PoolStringArray( "res://addons/CsharpVfsm/plugin.cfg", "res://addons/editor_icon_previewer/plugin.cfg" )
+enabled=PoolStringArray( "res://addons/CsharpVfsm/plugin.cfg" )
 
 [gui]
 

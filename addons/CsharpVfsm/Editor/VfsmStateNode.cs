@@ -9,12 +9,25 @@ using static CsharpVfsmPlugin;
 public class VfsmStateNode : GraphNode
 {
     public const string VfsmConnectionNodeGroup = "__vfsm_connection";
+
+    private static StyleBoxFlat StyleBoxSelected = null!;
     
     private LineEdit NameEdit = null!;
     private Button NewTriggerButton = null!;
 
     private VfsmStateMachine Machine = null!;
     public VfsmState State { get; private set; } = null!;
+    
+    public VfsmStateNode()
+    {
+        if (StyleBoxSelected is null) {
+            StyleBoxSelected = (StyleBoxFlat)GetStylebox("frame").Duplicate();
+            StyleBoxSelected.SetBorderWidthAll(1);
+            StyleBoxSelected.BorderColor = Colors.White;
+        }
+        
+        AddStyleboxOverride("selectedframe", StyleBoxSelected);
+    }
     
     public VfsmStateNode Init(VfsmState state, VfsmStateMachine machine)
     {
@@ -29,7 +42,7 @@ public class VfsmStateNode : GraphNode
     public override void _Ready()
     {
         Connect("offset_changed", this, nameof(On_OffsetChanged));
-
+        
         NameEdit = GetNode<LineEdit>("NameEdit");
         NewTriggerButton = GetNode<Button>("NewTriggerButton");
 
@@ -53,11 +66,13 @@ public class VfsmStateNode : GraphNode
     
         // Add new connection nodes for our triggers
         var connectionScene = GD.Load<PackedScene>(PluginResourcePath("Editor/VfsmStateNodeConnection.tscn"));
+        Node belowNode = NameEdit;
         foreach (var trigger in State.GetTriggers()) {
             var connectionNode = connectionScene.Instance<VfsmStateNodeConnection>()
                 .Init(trigger);
             connectionNode.AddToGroup(VfsmConnectionNodeGroup);
-            AddChild(connectionNode);
+            AddChildBelowNode(belowNode, connectionNode);
+            belowNode = connectionNode;
         }
         
         // Set slot data.

@@ -4,7 +4,7 @@
 content_margin_left = 30.0
 content_margin_right = 20.0
 content_margin_top = 30.0
-content_margin_bottom = 20.0
+content_margin_bottom = 12.0
 bg_color = Color( 0.231373, 0.239216, 0.266667, 1 )
 border_width_left = 1
 border_width_top = 1

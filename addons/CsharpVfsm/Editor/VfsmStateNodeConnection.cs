@@ -6,15 +6,12 @@ using static CsharpVfsmPlugin;
 [Tool]
 public class VfsmStateNodeConnection : PanelContainer
 {
-    private Label InfoLabel = null!;
     private Button InspectButton = null!; 
 
     public VfsmTrigger Trigger { get; private set; } = null!;
     
     public override void _Ready()
     {
-        InfoLabel = GetNode<Label>("%InfoLabel");
-        
         InspectButton = GetNode<Button>("%InspectButton");
         InspectButton.Connect("pressed", this, nameof(On_InspectButton_Pressed));
         
@@ -32,7 +29,7 @@ public class VfsmStateNodeConnection : PanelContainer
     public void Redraw()
     {
         if (Trigger.Kind is VfsmTrigger.TriggerKind.Timer) {
-            InfoLabel.Text = $"{Trigger.Duration}s";
+            InspectButton.Text = $"{Trigger.Duration}s";
         }
     }
     

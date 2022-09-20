@@ -4,16 +4,30 @@
 [ext_resource path="res://addons/CsharpVfsm/Assets/add.svg" type="Texture" id=2]
 [ext_resource path="res://addons/CsharpVfsm/Resources/Theme/panel_stylebox.tres" type="StyleBox" id=3]
 [ext_resource path="res://Example/editor_theme.tres" type="Theme" id=4]
-[ext_resource path="res://addons/CsharpVfsm/Resources/Theme/panel_stylebox_selected.tres" type="StyleBox" id=5]
+
+[sub_resource type="StyleBoxFlat" id=1]
+content_margin_left = 30.0
+content_margin_right = 20.0
+content_margin_top = 30.0
+content_margin_bottom = 12.0
+bg_color = Color( 0.231373, 0.239216, 0.266667, 1 )
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color( 0.4, 0.4225, 0.4825, 1 )
+shadow_color = Color( 0, 0, 0, 0.3 )
+shadow_size = 5
 
 [node name="GraphNode" type="GraphNode"]
 margin_right = 250.0
 margin_bottom = 84.0
 theme = ExtResource( 4 )
 custom_constants/port_offset = 0
+custom_constants/separation = 10
 custom_constants/title_offset = 24
 custom_styles/frame = ExtResource( 3 )
-custom_styles/selectedframe = ExtResource( 5 )
+custom_styles/selectedframe = SubResource( 1 )
 title = "State"
 slot/0/left_enabled = true
 slot/0/left_type = 0
@@ -38,9 +52,9 @@ text = "StateName"
 
 [node name="NewTriggerButton" type="Button" parent="."]
 margin_left = 30.0
-margin_top = 55.0
+margin_top = 64.0
 margin_right = 230.0
-margin_bottom = 81.0
+margin_bottom = 90.0
 text = "Add trigger"
 icon = ExtResource( 2 )
 clip_text = true

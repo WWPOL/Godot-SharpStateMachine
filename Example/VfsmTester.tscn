@@ -23,10 +23,22 @@ script = ExtResource( 3 )
 Name = "Foobar"
 TargetPath = NodePath("")
 ProcessFunction = null
-Position = Vector2( 640, 1780 )
+Position = Vector2( 520, 1680 )
 Triggers = [ SubResource( 1 ), SubResource( 6 ) ]
 
 [sub_resource type="Resource" id=7]
+resource_local_to_scene = true
+script = ExtResource( 4 )
+Kind = 1
+Duration = 0.5
+
+[sub_resource type="Resource" id=25]
+resource_local_to_scene = true
+script = ExtResource( 4 )
+Kind = 1
+Duration = 0.5
+
+[sub_resource type="Resource" id=26]
 resource_local_to_scene = true
 script = ExtResource( 4 )
 Kind = 1
@@ -38,17 +50,8 @@ script = ExtResource( 3 )
 Name = "State"
 TargetPath = NodePath("")
 ProcessFunction = null
-Position = Vector2( 1100, 1480 )
-Triggers = [ SubResource( 7 ) ]
-
-[sub_resource type="Resource" id=5]
-resource_local_to_scene = true
-script = ExtResource( 3 )
-Name = "State2"
-TargetPath = NodePath("")
-ProcessFunction = null
-Position = Vector2( 440, 160 )
-Triggers = [  ]
+Position = Vector2( 960, 1500 )
+Triggers = [ SubResource( 7 ), SubResource( 25 ), SubResource( 26 ) ]
 
 [sub_resource type="Resource" id=9]
 resource_local_to_scene = true
@@ -56,31 +59,13 @@ script = ExtResource( 3 )
 Name = "State22"
 TargetPath = NodePath("")
 ProcessFunction = null
-Position = Vector2( 1940, 1820 )
-Triggers = [  ]
-
-[sub_resource type="Resource" id=10]
-resource_local_to_scene = true
-script = ExtResource( 3 )
-Name = "State222"
-TargetPath = NodePath("")
-ProcessFunction = null
-Position = Vector2( 2040, 1800 )
-Triggers = [  ]
-
-[sub_resource type="Resource" id=20]
-resource_local_to_scene = true
-script = ExtResource( 3 )
-Name = "State2222"
-TargetPath = NodePath("")
-ProcessFunction = null
-Position = Vector2( -11.0955, -184.723 )
+Position = Vector2( 1440, 1620 )
 Triggers = [  ]
 
 [sub_resource type="Resource" id=4]
 resource_local_to_scene = true
 script = ExtResource( 2 )
-States = [ SubResource( 2 ), SubResource( 3 ), SubResource( 5 ), SubResource( 9 ), SubResource( 10 ), SubResource( 20 ) ]
+States = [ SubResource( 2 ), SubResource( 3 ), SubResource( 9 ) ]
 Transitions = {
 SubResource( 1 ): SubResource( 3 ),
 SubResource( 7 ): SubResource( 2 )
@@ -105,6 +90,12 @@ script = ExtResource( 4 )
 Kind = 1
 Duration = 0.5
 
+[sub_resource type="Resource" id=27]
+resource_local_to_scene = true
+script = ExtResource( 4 )
+Kind = 1
+Duration = 0.5
+
 [sub_resource type="Resource" id=13]
 resource_local_to_scene = true
 script = ExtResource( 3 )
@@ -112,12 +103,12 @@ Name = "State"
 TargetPath = NodePath("")
 ProcessFunction = null
 Position = Vector2( 580, 900 )
-Triggers = [ SubResource( 23 ), SubResource( 24 ) ]
+Triggers = [ SubResource( 23 ), SubResource( 24 ), SubResource( 27 ) ]
 
 [sub_resource type="Resource" id=19]
 resource_local_to_scene = true
 script = ExtResource( 3 )
-Name = "State"
+Name = "State2"
 TargetPath = NodePath("")
 ProcessFunction = null
 Position = Vector2( 31.7428, -336.221 )
