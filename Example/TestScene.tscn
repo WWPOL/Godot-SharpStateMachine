@@ -1,4 +1,4 @@
-[gd_scene load_steps=12 format=2]
+[gd_scene load_steps=11 format=2]
 
 [ext_resource path="res://addons/CsharpVfsm/VisualStateMachine.cs" type="Script" id=1]
 [ext_resource path="res://addons/CsharpVfsm/StateMachine/VfsmStateMachine.cs" type="Script" id=2]
@@ -10,28 +10,22 @@
 resource_local_to_scene = true
 script = ExtResource( 5 )
 Kind = 1
-Duration = 0.5
+Duration = 2.0
 
-[sub_resource type="Resource" id=3]
+[sub_resource type="Resource" id=2]
 resource_local_to_scene = true
 script = ExtResource( 3 )
 Name = "State"
 TargetPath = NodePath("")
 ProcessFunction = null
-Position = Vector2( -100, 100 )
+Position = Vector2( -20, 140 )
 Triggers = [ SubResource( 4 ) ]
 
-[sub_resource type="Resource" id=2]
+[sub_resource type="Resource" id=3]
 resource_local_to_scene = true
 script = ExtResource( 4 )
 SpecialKind = 1
-Position = Vector2( -440, 120 )
-
-[sub_resource type="Resource" id=6]
-resource_local_to_scene = true
-script = ExtResource( 5 )
-Kind = 1
-Duration = 0.5
+Position = Vector2( -320, 160 )
 
 [sub_resource type="Resource" id=5]
 resource_local_to_scene = true
@@ -39,18 +33,17 @@ script = ExtResource( 3 )
 Name = "State2"
 TargetPath = NodePath("")
 ProcessFunction = null
-Position = Vector2( -100, 460 )
-Triggers = [ SubResource( 6 ) ]
+Position = Vector2( 400, 140 )
+Triggers = [  ]
 
 [sub_resource type="Resource" id=1]
 resource_local_to_scene = true
 script = ExtResource( 2 )
-EntryTransitionState = SubResource( 3 )
-States = [ SubResource( 2 ), SubResource( 3 ), SubResource( 5 ) ]
+States = [ SubResource( 3 ), SubResource( 2 ), SubResource( 5 ) ]
 Transitions = {
-SubResource( 6 ): SubResource( 3 ),
 SubResource( 4 ): SubResource( 5 )
 }
+EntryTransitionStates = [ SubResource( 2 ) ]
 
 [node name="Control" type="Control"]
 anchor_right = 1.0
@@ -58,4 +51,6 @@ anchor_bottom = 1.0
 
 [node name="VisualStateMachine" type="Node" parent="."]
 script = ExtResource( 1 )
-_machine = SubResource( 1 )
+Machine = SubResource( 1 )
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="."]

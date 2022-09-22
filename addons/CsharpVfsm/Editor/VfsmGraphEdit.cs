@@ -1,15 +1,18 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+
 using Godot;
+
 using static CsharpVfsmPlugin;
+
 using GodotArray = Godot.Collections.Array;
 
 [Tool]
 public class VfsmGraphEdit : GraphEdit
 {
     private VisualStateMachine? MachineNode; 
-    public VfsmStateMachine? Machine
+    private VfsmStateMachine? Machine
         => MachineNode?.Machine;
     
     private CheckBox ProcessToggle = null!;
@@ -122,7 +125,7 @@ public class VfsmGraphEdit : GraphEdit
             StateNode stateNode;
             if (state is VfsmStateSpecial special) {
                 stateNode = stateNodeSpecialScene.Instance<VfsmStateNodeSpecial>()
-                        .Init(special, Machine);
+                        .Init(special);
                 
                 if (special.SpecialKind is VfsmStateSpecial.Kind.Entry) {
                     entryNode = (VfsmStateNodeSpecial)stateNode;
@@ -140,7 +143,7 @@ public class VfsmGraphEdit : GraphEdit
             if (selectedStates.Contains(state)) {
                 stateNode.Selected = true;
             }
-            
+
             if (Machine.EntryTransitionState == state) {
                 entryTransitionTarget = stateNode;
             }
@@ -151,6 +154,7 @@ public class VfsmGraphEdit : GraphEdit
         PluginTrace("Drawing transitions");
         
         // Draw state transition connections.
+        PluginTrace($"{entryNode} {entryTransitionTarget}");
         if (entryNode is not null && entryTransitionTarget is not null) {
             ConnectNode(entryNode.Name, 0, entryTransitionTarget.Name, 0);
         }
@@ -239,9 +243,9 @@ public class VfsmGraphEdit : GraphEdit
         } 
     }
     
-    private void On_NodeDeselected(Node _)
+    private void On_NodeDeselected(Node node)
     {
-        if (SelectedNodes.Count() == 0) {
+        if (!SelectedNodes.Except(new []{ node }).Any()) {
             CsharpVfsmEventBus.Bus.EmitSignal(
                 nameof(CsharpVfsmEventBus.ResourceInspectRequested),
                 Machine);

@@ -1,26 +1,42 @@
-using System.Transactions;
 using System;
-using System.Linq;
+
 using Godot;
+
 using static CsharpVfsmPlugin;
+
 using GodotArray = Godot.Collections.Array;
 
-/// Manages the runtime operations of a VFSM.
+/// <summary>
+/// A finite state machine. Selecting it in the node tree will show a visual representation of the state machine that
+/// can be manipulated as a graph.
+///
+/// This node manages the runtime state of the state machine. See <see cref="VfsmStateMachine"/> for the resource that
+/// stores the static data such as the states and triggers.
+/// </summary>
 [Tool]
 public class VisualStateMachine : Node
 {
+    /// <summary>
+    /// Emitted after the machine has transitioned from state <c>from</c> to state <c>to</c>. If the machine was not
+    /// in a state prior to this transition, <c>from</c> will be <c>null</c>.
+    /// </summary>
     [Signal] public delegate void Transitioned(VfsmState? from, VfsmState to);
 
+    /// <summary>
+    /// The resource containing the state and transition information.
+    /// </summary>
     [Export]
-    public Resource _machine = null!;
-    public VfsmStateMachine Machine { 
-        get {
-            return (VfsmStateMachine)_machine;
-        }
-        set => _machine = value;
-    } 
+    public VfsmStateMachine Machine { get; private set; } = null!;
 
-    private VfsmState? _currentState;
+    /// <summary>
+    /// If <c>true</c>, the state machine will automatically start after entering the scene tree.
+    /// </summary>
+    [Export]
+    public bool Autostart = false;
+
+    /// <summary>
+    /// The current state of the machine, or null if it is not set.
+    /// </summary>
     public VfsmState? CurrentState
     {
         get => _currentState;
@@ -31,16 +47,22 @@ public class VisualStateMachine : Node
         }
     }
     
+    private VfsmState? _currentState;
+    
     public bool EditorProcess = false;
     
     public override void _Ready()
     {
-        if (Machine is null || _machine is not VfsmStateMachine) {
+        if (Machine is null) {
             PluginTrace("Initializing new StateMachine");
             Machine = VfsmStateMachine.Default();
         }
         
         Machine.Init(this);
+
+        if (Autostart) {
+            Start();
+        }
     }
 
     public override void _Process(float delta)
@@ -59,10 +81,8 @@ public class VisualStateMachine : Node
                     return;
                 }
             }
-            
-            if (CurrentState.Process is not null) {
-                CurrentState.Process(delta);
-            }
+
+            CurrentState.Process?.Invoke(delta);
 
             CurrentState.UpdateTriggers(delta);
         }
@@ -81,18 +101,29 @@ public class VisualStateMachine : Node
         
         PluginTraceExit();
     }
-        
+    
+    /// <summary>
+    /// Resets the machine and begins operation from the entry node. Will print a warning and return if there is no
+    /// entry node. The machine will be started at the entry node; therefore, a signal will be fired immediately
+    /// after calling this to indicate that a state transition has occurred to the start state.
+    ///
+    /// For starting the machine at a specified node, see <see cref="ChangeToState"/>.
+    /// </summary>
     public void Start()
     {
-        if (Machine.EntryTransitionState is null) {
+        if (!Machine.HasSpecialState(VfsmStateSpecial.Kind.Entry)) {
             GD.PushWarning("Unable to start the FSM because no entry transition was found"); 
             return;
         }
         
         Reset();
-        ChangeToState(Machine.EntryTransitionState);
+        ChangeToState(Machine.GetSpecialState(VfsmStateSpecial.Kind.Entry)!);
     }
     
+    /// <summary>
+    /// Perform a transition to the state <c>to</c>. If the current state of the machine lacks a direct connection to the
+    /// target state, <c>force</c> must be set to true. Otherwise, a warning will be printed and the function will exit.
+    /// </summary>
     public void ChangeToState(VfsmState to, bool force = false)
     {
         PluginTraceEnter();
@@ -101,8 +132,6 @@ public class VisualStateMachine : Node
             GD.PushWarning($"Attempted to perform invalid state transition from \"{CurrentState.Name}\" to \"{to.Name}\"");
             return;
         }
-        
-        PluginTrace("Performing state OnLeave");
         
         // Detach from current state's triggers
         if (CurrentState is not null) {
@@ -116,8 +145,6 @@ public class VisualStateMachine : Node
             }
         }
         
-        PluginTrace($"Transitioning to {to.Name}");
-        
         // Do the transition.
         var previousState = CurrentState;
         CurrentState = to; 
@@ -126,7 +153,6 @@ public class VisualStateMachine : Node
         }
         
         if (CurrentState is not VfsmStateSpecial) {
-            PluginTrace("e");
             // Attach to next state's triggers.
             foreach (var trigger in CurrentState!.GetTriggers()) {
                 trigger.Connect(nameof(VfsmTrigger.Triggered), this, nameof(On_StateTransitionTriggered), new GodotArray(trigger));
@@ -138,6 +164,10 @@ public class VisualStateMachine : Node
         PluginTraceExit();
     }
     
+    /// <summary>
+    /// Resets the machine. The machine will have no assigned state after the reset, so it will not perform any
+    /// processing until <see cref="Start"/> or <see cref="ChangeToState"/> is called.
+    /// </summary>
     public void Reset()
     {
         foreach (var t in Machine.GetTransitions().Keys) {

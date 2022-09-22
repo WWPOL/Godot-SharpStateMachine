@@ -1,12 +1,15 @@
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
+
 using Godot;
+
+using Path = System.IO.Path;
 
 [Tool]
 public class CsharpVfsmPlugin : EditorPlugin
 {
-    private VfsmEditor Editor;
-    private ToolButton ToolButton;
+    private VfsmEditor Editor = null!;
+    private ToolButton ToolButton = null!;
 
     public override void _EnterTree()
     {
@@ -104,7 +107,7 @@ public class CsharpVfsmPlugin : EditorPlugin
         => $"res://addons/CsharpVfsm/{resource}";
         
     private static string PathToClassname(string path)
-        => System.IO.Path.GetFileName(path).Replace(".cs", "");
+        => Path.GetFileName(path).Replace(".cs", "");
     
     [Conditional("VFSM_DEVELOP")]
     public static void PluginTraceEnter(

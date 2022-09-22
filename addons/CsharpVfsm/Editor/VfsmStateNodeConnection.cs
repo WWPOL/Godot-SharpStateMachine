@@ -1,7 +1,4 @@
 using Godot;
-using System;
-
-using static CsharpVfsmPlugin;
 
 [Tool]
 public class VfsmStateNodeConnection : PanelContainer

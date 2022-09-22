@@ -1,4 +1,3 @@
-using System.Security.RightsManagement;
 using Godot;
 
 using static CsharpVfsmPlugin;
@@ -15,7 +14,6 @@ public class VfsmEditor : Control
     
     public void Edit(VisualStateMachine machine)
     {
-        PluginTrace("Editor: Editing machine");
         GraphEdit.Edit(machine);
     }
 }

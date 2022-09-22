@@ -1,6 +1,5 @@
-using System;
-using System.Linq;
 using Godot;
+
 using static CsharpVfsmPlugin;
 
 using GodotArray = Godot.Collections.Array;
@@ -39,7 +38,14 @@ public class VfsmTrigger : Resource
     }
 
     private float TimerTime = 0f;
+
+    private VfsmTrigger()
+    { }
     
+    /// <summary>
+    /// Create a new trigger resource. Use this in place of a constructor, if necessary. Required due to Godot
+    /// custom node weirdness.
+    /// </summary>
     public static VfsmTrigger Default()
         => (VfsmTrigger)GD.Load<Resource>(PluginResourcePath("Resources/vfsm_trigger.tres")).Duplicate();
     

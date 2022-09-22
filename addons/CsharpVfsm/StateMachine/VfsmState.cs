@@ -1,8 +1,9 @@
-using Godot;
 using System;
-using System.Linq;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text.RegularExpressions;
+
+using Godot;
 
 using static CsharpVfsmPlugin;
 
@@ -13,10 +14,13 @@ public class VfsmState : Resource
 {
     [Signal] public delegate void ParentChanged();
 
+    public const string DefaultName = "State";
+
 #region Exports
 
-    //[Export]
-    private string _name = "State";
+    /// <summary>
+    /// The name of the state. Each state in a machine must have a unique name.
+    /// </summary>
     public virtual string Name {
         get => _name;
         set {
@@ -29,8 +33,9 @@ public class VfsmState : Resource
         }
     }
     
-    //[Export]
-    private NodePath _targetPath = null!;
+    /// <summary>
+    /// The node which will be referenced when calling state functions such as <see cref="Process"/>.
+    /// </summary>
     public NodePath TargetPath {
         get => _targetPath;
         set {
@@ -40,8 +45,10 @@ public class VfsmState : Resource
         }
     }
 
-    //[Export]
-    private string _processFunction = "";
+    /// <summary>
+    /// The name of the function to be called upon a engine <c>Process</c> event. Requires <see cref="TargetPath"/> to
+    /// be set in order to take effect.
+    /// </summary>
     public string ProcessFunction {
         get => _processFunction;
         set {
@@ -51,8 +58,10 @@ public class VfsmState : Resource
         }
     }
     
-    //[Export]
-    private Vector2 _position = new(0, 0);
+    /// <summary>
+    /// The offset of this state when displayed on a <see cref="VfsmGraphEdit"/>. It has no effect on the runtime
+    /// operations of the state machine.
+    /// </summary>
     public Vector2 Position {
         get =>_position;
         set {
@@ -63,11 +72,22 @@ public class VfsmState : Resource
         }
     }
     
-    //[Export]
+    /// <summary>
+    /// The <see cref="VfsmTrigger"/>s that this node checks when it is active.
+    /// </summary>
     protected List<VfsmTrigger> Triggers = new();
+    
+    private string _name = "State";
+    private NodePath _targetPath = "";
+    private string _processFunction = "";
+    private Vector2 _position = new(0, 0);
 
 #endregion
     
+    /// <summary>
+    /// Create a new state resource. Use this in place of a constructor, if necessary. Required due to Godot custom
+    /// node weirdness.
+    /// </summary>
     public static VfsmState Default()
         => (VfsmState)GD.Load<VfsmState>(PluginResourcePath("Resources/vfsm_state.tres")).Duplicate();
 
@@ -75,6 +95,8 @@ public class VfsmState : Resource
 
     public virtual VfsmState Init()
     {
+        PluginTraceEnter();
+
         if (!TargetPath.IsEmpty() && !ProcessFunction.Empty() && GetLocalScene() is not null) {
             Target = GetLocalScene().GetNode(TargetPath);
             var methods = Target.GetType().GetMethods();
@@ -86,7 +108,7 @@ public class VfsmState : Resource
                 if (parameters.Count() != 1 || parameters[0].ParameterType != typeof(float)) {
                     GD.PushWarning($"Invalid parameters for process function {ProcessFunction}");
                 } else {
-                    var method = Target.GetType().GetMethod(ProcessFunction);
+                    var method = Target.GetType().GetMethod(ProcessFunction)!;
                     Process = (Action<float>)Delegate.CreateDelegate(typeof(Action<float>), Target, method);
                 }
             } else {
@@ -96,6 +118,8 @@ public class VfsmState : Resource
         
         // TODO OnEnter and OnLeave
         
+        PluginTraceExit();
+
         return this;
     }
 
@@ -134,7 +158,6 @@ public class VfsmState : Resource
     public virtual IList<VfsmTrigger> GetTriggers() => Triggers.AsReadOnly();
     
     private void EmitParentChanged() {
-        PluginTrace("Emitting to parent");
         EmitSignal(nameof(ParentChanged));
     }
     
@@ -167,6 +190,4 @@ public class VfsmState : Resource
             )
         );
     }
-    
-    public const string DefaultName = "State";
 }

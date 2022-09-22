@@ -1,6 +1,5 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
+
 using Godot;
 
 using GodotArray = Godot.Collections.Array;
@@ -16,6 +15,7 @@ public class VfsmStateSpecial : VfsmState
         get => _specialKind;
         set {
             _specialKind = value;
+            PluginTrace("kind changed");
             EmitChanged();
             PropertyListChangedNotify();
         }
@@ -23,15 +23,18 @@ public class VfsmStateSpecial : VfsmState
     
     public override string Name { get => SpecialKind.ToString(); set {} }
 
+    /// <summary>
+    /// Create a new state resource. Use this in place of a constructor, if necessary. Required due to Godot
+    /// custom node weirdness.
+    /// </summary>
     public new static VfsmStateSpecial Default()
         => (VfsmStateSpecial)GD.Load<VfsmStateSpecial>(PluginResourcePath("Resources/vfsm_state_special.tres")).Duplicate();
     
-    private Exception TriggerException => new InvalidOperationException("Special states cannot have triggers");
+    private static Exception TriggerException 
+        => new InvalidOperationException("Special states cannot have triggers");
     public override void AddTrigger(VfsmTrigger _)
         => throw TriggerException;
     public override bool RemoveTrigger(VfsmTrigger _)
-        => throw TriggerException;
-    public virtual void UpdateTriggers()
         => throw TriggerException;
     
     public override GodotArray _GetPropertyList()

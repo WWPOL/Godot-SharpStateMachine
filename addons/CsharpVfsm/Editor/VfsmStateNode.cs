@@ -1,6 +1,8 @@
-using Godot;
 using System;
 using System.Linq;
+
+using Godot;
+
 using static CsharpVfsmPlugin;
 
 using GodotArray = Godot.Collections.Array;
@@ -16,25 +18,24 @@ public class VfsmStateNode : StateNode
     private Button NewTriggerButton = null!;
 
     private VfsmStateMachine Machine = null!;
-    public override VfsmState State { get; set; } = null!;
     
     public VfsmStateNode()
     {
         if (StyleBoxSelected is null) {
-            StyleBoxSelected = (StyleBoxFlat)GetStylebox("frame").Duplicate();
-            StyleBoxSelected.SetBorderWidthAll(1);
-            StyleBoxSelected.BorderColor = Colors.White;
+            var frame = GetStylebox("frame");
+            if (frame is StyleBoxFlat) {
+                StyleBoxSelected = (StyleBoxFlat)frame.Duplicate();
+                StyleBoxSelected.SetBorderWidthAll(1);
+                StyleBoxSelected.BorderColor = Colors.White;
+                AddStyleboxOverride("selectedframe", StyleBoxSelected);
+            }
         }
-        
-        AddStyleboxOverride("selectedframe", StyleBoxSelected);
     }
     
     public VfsmStateNode Init(VfsmState state, VfsmStateMachine machine)
     {
         State = state;
         Machine = machine;
-
-        Offset = State.Position;
 
         return this; 
     }

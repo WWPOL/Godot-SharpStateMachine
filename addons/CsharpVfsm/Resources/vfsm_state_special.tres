@@ -5,8 +5,5 @@
 [resource]
 resource_local_to_scene = true
 script = ExtResource( 1 )
-TargetPath = NodePath("")
-ProcessFunction = ""
-Position = Vector2( 0, 0 )
-Triggers = [  ]
 SpecialKind = 1
+Position = Vector2( 0, 0 )
