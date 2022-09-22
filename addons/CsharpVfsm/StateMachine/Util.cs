@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Godot;
+
 using GodotDictionary = Godot.Collections.Dictionary;
 
 public static class PluginUtil
@@ -42,6 +43,16 @@ public static class PluginUtil
         }
         return s;
     }
+}
+
+/// <summary>
+/// Dummy attribute to mark exports that are already handled by an overridden <c>_GetPropertyList</c>.
+/// </summary>
+[AttributeUsage(AttributeTargets.Field | AttributeTargets.Property)]
+public class ExportFakeAttribute : Attribute
+{
+    public ExportFakeAttribute()
+    { }
 }
 
 public static class NodeExtension 

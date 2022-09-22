@@ -18,7 +18,7 @@ script = ExtResource( 3 )
 Name = "State"
 TargetPath = NodePath("")
 ProcessFunction = null
-Position = Vector2( -20, 140 )
+Position = Vector2( -140, 440 )
 Triggers = [ SubResource( 4 ) ]
 
 [sub_resource type="Resource" id=3]
@@ -52,5 +52,4 @@ anchor_bottom = 1.0
 [node name="VisualStateMachine" type="Node" parent="."]
 script = ExtResource( 1 )
 Machine = SubResource( 1 )
-
-[node name="AnimationPlayer" type="AnimationPlayer" parent="."]
+Autostart = true

@@ -307,9 +307,7 @@ public class VfsmGraphEdit : GraphEdit
         if (Machine is null)
             throw new NullReferenceException("Attempted to perform node operation with a null machine");
 
-        if (state is null) {
-            state = VfsmState.Default();
-        }
+        state ??= VfsmState.Default();
 
         state.Position = ScreenToGraphOffset(Popup.RectGlobalPosition);
 

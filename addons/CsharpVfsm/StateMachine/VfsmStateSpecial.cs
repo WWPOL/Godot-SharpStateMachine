@@ -9,8 +9,23 @@ using static CsharpVfsmPlugin;
 [Tool]
 public class VfsmStateSpecial : VfsmState
 {
-    //[Export]
-    private Kind _specialKind = Kind.Entry;
+    public override GodotArray _GetPropertyList()
+        => new() {
+            PluginUtil.MakeProperty(
+                nameof(SpecialKind),
+                Variant.Type.Int,
+                hint: PropertyHint.Enum,
+                hintString: PluginUtil.EnumHintString<Kind>()
+            ),
+                
+            // Inherited from parent
+            PluginUtil.MakeProperty(
+                nameof(Position),
+                Variant.Type.Vector2
+            )
+        };
+    
+    [ExportFake]
     public Kind SpecialKind {
         get => _specialKind;
         set {
@@ -20,6 +35,8 @@ public class VfsmStateSpecial : VfsmState
             PropertyListChangedNotify();
         }
     }
+    
+    private Kind _specialKind = Kind.Entry;
     
     public override string Name { get => SpecialKind.ToString(); set {} }
 
@@ -36,22 +53,6 @@ public class VfsmStateSpecial : VfsmState
         => throw TriggerException;
     public override bool RemoveTrigger(VfsmTrigger _)
         => throw TriggerException;
-    
-    public override GodotArray _GetPropertyList()
-        => new() {
-            PluginUtil.MakeProperty(
-                nameof(SpecialKind),
-                Variant.Type.Int,
-                hint: PropertyHint.Enum,
-                hintString: PluginUtil.EnumHintString<Kind>()
-            ),
-                
-            // Inherited from parent
-            PluginUtil.MakeProperty(
-                nameof(Position),
-                Variant.Type.Vector2
-            )
-        };
     
     public enum Kind
     {

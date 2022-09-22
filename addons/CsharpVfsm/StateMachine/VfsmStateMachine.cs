@@ -4,7 +4,10 @@ using System.Linq;
 
 using Godot;
 
+using GodotArray = Godot.Collections.Array;
+
 using static CsharpVfsmPlugin;
+using static PluginUtil;
 
 /// <summary>
 /// The static data of a state machine, including states and transitions.
@@ -12,18 +15,38 @@ using static CsharpVfsmPlugin;
 [Tool]
 public class VfsmStateMachine : Resource
 {
+    public override GodotArray _GetPropertyList()
+        => new() {
+            MakeProperty(
+                nameof(States),
+                Variant.Type.Array),
+            MakeProperty(
+                nameof(Transitions),
+                Variant.Type.Dictionary),
+            // Store the entry transition as a list...
+            MakeProperty(
+                nameof(EntryTransitionStates),
+                Variant.Type.Array,
+                usage: PropertyUsageFlags.Storage),
+            // ...but display it as a state
+            MakeProperty(
+                nameof(EntryTransitionState),
+                Variant.Type.Object,
+                usage: PropertyUsageFlags.Editor)
+        };
+    
     /// <summary>
     /// The possible states of the machine. The machine must contain a state that it is trying to switch to.
     /// </summary>
-    [Export]
+    [ExportFake]
     private readonly List<VfsmState> States = new();
-    
+
     /// <summary>
     /// The transitions the machine will follow when the given trigger (represented as the key) is triggered.
     /// </summary>
-    [Export]
+    [ExportFake]
     private readonly Dictionary<VfsmTrigger, VfsmState> Transitions = new();
-    
+
     /// <summary>
     /// If we attempt to store a plain resource reference in an export field, it will result in that node being
     /// duplicated on an object level when instancing the scene. This causes equality checks that normally should be
@@ -31,9 +54,9 @@ public class VfsmStateMachine : Resource
     /// values stored in <see cref="States"/>. To counteract this, we store the reference as a single-element array,
     /// which retains the reference when constructing the scene.
     /// </summary>
-    [Export]
+    [ExportFake]
     private List<VfsmState?> EntryTransitionStates = new(1);
-    
+
     /// <summary>
     /// The state that will be activated when the machine is started. Visually, it is represented as the state connected
     /// to the "entry" node of the machine.

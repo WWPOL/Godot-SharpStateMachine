@@ -21,6 +21,7 @@ public class VfsmState : Resource
     /// <summary>
     /// The name of the state. Each state in a machine must have a unique name.
     /// </summary>
+    [ExportFake]
     public virtual string Name {
         get => _name;
         set {
@@ -36,6 +37,7 @@ public class VfsmState : Resource
     /// <summary>
     /// The node which will be referenced when calling state functions such as <see cref="Process"/>.
     /// </summary>
+    [ExportFake]
     public NodePath TargetPath {
         get => _targetPath;
         set {
@@ -49,6 +51,7 @@ public class VfsmState : Resource
     /// The name of the function to be called upon a engine <c>Process</c> event. Requires <see cref="TargetPath"/> to
     /// be set in order to take effect.
     /// </summary>
+    [ExportFake]
     public string ProcessFunction {
         get => _processFunction;
         set {
@@ -62,6 +65,7 @@ public class VfsmState : Resource
     /// The offset of this state when displayed on a <see cref="VfsmGraphEdit"/>. It has no effect on the runtime
     /// operations of the state machine.
     /// </summary>
+    [ExportFake]
     public Vector2 Position {
         get =>_position;
         set {
@@ -75,6 +79,7 @@ public class VfsmState : Resource
     /// <summary>
     /// The <see cref="VfsmTrigger"/>s that this node checks when it is active.
     /// </summary>
+    [ExportFake]
     protected List<VfsmTrigger> Triggers = new();
     
     private string _name = "State";
@@ -104,15 +109,17 @@ public class VfsmState : Resource
             PluginTrace($"{TargetPath}: {Target.GetType()}");
 
             if (Target.GetType().GetMethods().Select(m => m.Name).Contains(ProcessFunction)) {
+                // Found the specified function
                 var parameters = methods.First(m => m.Name == ProcessFunction).GetParameters();
                 if (parameters.Count() != 1 || parameters[0].ParameterType != typeof(float)) {
-                    GD.PushWarning($"Invalid parameters for process function {ProcessFunction}");
-                } else {
-                    var method = Target.GetType().GetMethod(ProcessFunction)!;
-                    Process = (Action<float>)Delegate.CreateDelegate(typeof(Action<float>), Target, method);
-                }
-            } else {
-                GD.PushWarning($"Process function \"{ProcessFunction}\" not found");
+                    throw new InvalidOperationException($"Process function {ProcessFunction} (state \"{Name}\") has invalid arguments");
+                } 
+                
+                var method = Target.GetType().GetMethod(ProcessFunction)!;
+                Process = (Action<float>)Delegate.CreateDelegate(typeof(Action<float>), Target, method);
+            } else if (!Engine.EditorHint) {
+                // Couldn't find function and we're not in tool mode, so the function definitely doesn't exist.
+                throw new InvalidOperationException($"Process function \"{ProcessFunction}\" (state \"{Name}\") not found");
             }
         }
         
@@ -178,7 +185,10 @@ public class VfsmState : Resource
             ),
             PluginUtil.MakeProperty(
                 nameof(ProcessFunction),
-                Variant.Type.String
+                Variant.Type.String,
+                usage: TargetPath.IsEmpty() 
+                    ? PropertyUsageFlags.Storage
+                    : PropertyUsageFlags.Default
             ),
             PluginUtil.MakeProperty(
                 nameof(Position),

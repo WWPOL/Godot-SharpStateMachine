@@ -13,8 +13,26 @@ public class VfsmTrigger : Resource
 
     [Signal] public delegate void Triggered();
     
-    //[Export]
-    private int _kind = (int)TriggerKind.Timer;
+    public override GodotArray _GetPropertyList()
+        => new() {
+            PluginUtil.MakeProperty(
+                nameof(Kind),
+                Variant.Type.Int,
+                PropertyUsageFlags.Default,
+                PropertyHint.Enum,
+                PluginUtil.EnumHintString<TriggerKind>()),
+            PluginUtil.MakeProperty(
+                nameof(Duration),
+                Variant.Type.Real,
+                Kind is TriggerKind.Timer 
+                    ? PropertyUsageFlags.Default 
+                    : PropertyUsageFlags.Storage)
+        };
+    
+    /// <summary>
+    /// The method of activation for this trigger.
+    /// </summary>
+    [ExportFake]
     public TriggerKind Kind {
         get => (TriggerKind)_kind;
         set {
@@ -25,8 +43,10 @@ public class VfsmTrigger : Resource
         } 
     }
 
-    //[Export]
-    private float _duration = 0.5f;
+    /// <summary>
+    /// If <see cref="Kind"/> is <see cref="TriggerKind.Timer"/>, the duration after which this will be triggered.
+    /// </summary>
+    [ExportFake]
     public float Duration {
         get => _duration;
         set {
@@ -36,18 +56,21 @@ public class VfsmTrigger : Resource
             PropertyListChangedNotify();
         }
     }
+    
+    private int _kind = (int)TriggerKind.Timer;
+    private float _duration = 0.5f;
 
     private float TimerTime = 0f;
 
-    private VfsmTrigger()
-    { }
-    
     /// <summary>
     /// Create a new trigger resource. Use this in place of a constructor, if necessary. Required due to Godot
     /// custom node weirdness.
     /// </summary>
     public static VfsmTrigger Default()
         => (VfsmTrigger)GD.Load<Resource>(PluginResourcePath("Resources/vfsm_trigger.tres")).Duplicate();
+    
+    private VfsmTrigger()
+    { }
     
     public void Update(float delta)
     {
@@ -58,26 +81,13 @@ public class VfsmTrigger : Resource
         }
     }
     
+    /// <summary>
+    /// Resets the internal state of this node to its defaults.
+    /// </summary>
     public void Reset()
     {
         TimerTime = 0f;
     }
-
-    public override GodotArray _GetPropertyList()
-        => new() {
-            PluginUtil.MakeProperty(
-                nameof(Kind),
-                Variant.Type.Int,
-                PropertyUsageFlags.Default,
-                PropertyHint.Enum,
-                PluginUtil.EnumHintString<TriggerKind>()
-            ),
-            PluginUtil.MakeProperty(
-                nameof(Duration),
-                Variant.Type.Real,
-                Kind is TriggerKind.Timer ? PropertyUsageFlags.Default : PropertyUsageFlags.Storage
-            )
-        };
 
     private void EmitParentChanged()
         => EmitSignal(nameof(ParentChanged));
