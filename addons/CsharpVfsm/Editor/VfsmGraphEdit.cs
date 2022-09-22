@@ -18,6 +18,10 @@ public class VfsmGraphEdit : GraphEdit
     private CheckBox ProcessToggle = null!;
     private VfsmGraphEditPopup Popup = null!;
 
+    // Used to handle the fact that Godot fires the deselect event after the select event when selecting a node with
+    // another node already selected.
+    private Node? SelectedNodeTemp = null;
+
     public override void _Ready()
     {
         PluginTraceEnter();
@@ -46,10 +50,8 @@ public class VfsmGraphEdit : GraphEdit
 
     public override void _UnhandledInput(InputEvent ev)
     {
-        if (ev is InputEventMouseButton mouseEvent) {
-            if (mouseEvent.ButtonIndex == (int)ButtonList.Left) {
-                Popup.Visible = false; 
-            }
+        if (ev is InputEventMouseButton { ButtonIndex: (int)ButtonList.Left }) {
+            Popup.Visible = false; 
         }
     }
     
@@ -235,21 +237,26 @@ public class VfsmGraphEdit : GraphEdit
     
     private void On_NodeSelected(Node node)
     {
-        PluginTrace(node);
         if (node is StateNode stateNode) {
             CsharpVfsmEventBus.Bus.EmitSignal(
-                nameof(CsharpVfsmEventBus.ResourceInspectRequested), 
+                nameof(CsharpVfsmEventBus.ResourceInspectRequested),
                 stateNode.State);
-        } 
+        }
+
+        if (SelectedNodes.Any()) {
+            SelectedNodeTemp = node;
+        }
     }
     
     private void On_NodeDeselected(Node node)
     {
-        if (!SelectedNodes.Except(new []{ node }).Any()) {
+        if (SelectedNodeTemp is null && !SelectedNodes.Except(new []{ node }).Any()) {
             CsharpVfsmEventBus.Bus.EmitSignal(
                 nameof(CsharpVfsmEventBus.ResourceInspectRequested),
                 Machine);
         }
+
+        SelectedNodeTemp = null;
     }
     
     private void On_DeleteNodesRequest(GodotArray _)
