@@ -1,6 +1,6 @@
 [gd_scene load_steps=7 format=2]
 
-[ext_resource path="res://Example/editor_theme.tres" type="Theme" id=1]
+[ext_resource path="res://Example/Resources/editor_theme.tres" type="Theme" id=1]
 [ext_resource path="res://addons/CsharpVfsm/Assets/entry_box.svg" type="Texture" id=2]
 [ext_resource path="res://addons/CsharpVfsm/Editor/VfsmStateNodeSpecial.cs" type="Script" id=3]
 [ext_resource path="res://addons/CsharpVfsm/Assets/entry_box_selected.svg" type="Texture" id=4]

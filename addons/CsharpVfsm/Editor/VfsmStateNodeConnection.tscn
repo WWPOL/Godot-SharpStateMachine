@@ -2,7 +2,7 @@
 
 [ext_resource path="res://addons/CsharpVfsm/Editor/VfsmStateNodeConnection.cs" type="Script" id=1]
 [ext_resource path="res://addons/CsharpVfsm/Assets/timer.svg" type="Texture" id=2]
-[ext_resource path="res://Example/editor_theme.tres" type="Theme" id=3]
+[ext_resource path="res://Example/Resources/editor_theme.tres" type="Theme" id=3]
 [ext_resource path="res://addons/CsharpVfsm/Assets/remove.svg" type="Texture" id=4]
 
 [sub_resource type="StyleBoxFlat" id=1]

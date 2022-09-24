@@ -1,4 +1,4 @@
-[gd_scene load_steps=15 format=2]
+[gd_scene load_steps=20 format=2]
 
 [ext_resource path="res://addons/CsharpVfsm/VisualStateMachine.cs" type="Script" id=1]
 [ext_resource path="res://addons/CsharpVfsm/StateMachine/VfsmStateMachine.cs" type="Script" id=2]
@@ -6,6 +6,7 @@
 [ext_resource path="res://addons/CsharpVfsm/StateMachine/VfsmStateSpecial.cs" type="Script" id=4]
 [ext_resource path="res://addons/CsharpVfsm/StateMachine/VfsmTrigger.cs" type="Script" id=5]
 [ext_resource path="res://Example/TestScene.cs" type="Script" id=6]
+[ext_resource path="res://Example/Resources/fontdata_regular.tres" type="DynamicFontData" id=7]
 
 [sub_resource type="Resource" id=4]
 resource_local_to_scene = true
@@ -26,7 +27,7 @@ Triggers = [ SubResource( 4 ) ]
 resource_local_to_scene = true
 script = ExtResource( 4 )
 SpecialKind = 1
-Position = Vector2( -300, 120 )
+Position = Vector2( -220, 140 )
 
 [sub_resource type="Resource" id=6]
 resource_local_to_scene = true
@@ -53,7 +54,7 @@ CheckFunction = "State_State3_CheckAdvance"
 [sub_resource type="Resource" id=8]
 resource_local_to_scene = true
 script = ExtResource( 3 )
-Name = "State"
+Name = "State3"
 ProcessFunction = null
 Position = Vector2( 120, 400 )
 Triggers = [ SubResource( 7 ) ]
@@ -69,6 +70,23 @@ SubResource( 7 ): SubResource( 2 )
 }
 EntryTransitionStates = [ SubResource( 2 ) ]
 
+[sub_resource type="DynamicFontData" id=10]
+font_path = "res://Example/Resources/Quicksand-Bold.ttf"
+
+[sub_resource type="DynamicFont" id=11]
+size = 24
+use_filter = true
+font_data = SubResource( 10 )
+
+[sub_resource type="DynamicFont" id=9]
+size = 24
+use_filter = true
+font_data = ExtResource( 7 )
+
+[sub_resource type="DynamicFont" id=12]
+use_filter = true
+font_data = ExtResource( 7 )
+
 [node name="Control" type="Control"]
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -79,3 +97,33 @@ script = ExtResource( 1 )
 Machine = SubResource( 1 )
 TargetPath = NodePath("..")
 Autostart = true
+
+[node name="VBoxContainer" type="VBoxContainer" parent="."]
+anchor_right = 1.0
+anchor_bottom = 1.0
+size_flags_horizontal = 3
+size_flags_vertical = 3
+alignment = 1
+
+[node name="StateLabel" type="RichTextLabel" parent="VBoxContainer"]
+unique_name_in_owner = true
+margin_top = 272.0
+margin_right = 1024.0
+margin_bottom = 303.0
+custom_fonts/bold_font = SubResource( 11 )
+custom_fonts/normal_font = SubResource( 9 )
+bbcode_enabled = true
+bbcode_text = "[center]Current state: [b]Foobar[/b][/center]"
+text = "Current state: Foobar"
+fit_content_height = true
+
+[node name="InstructionLabel" type="RichTextLabel" parent="VBoxContainer"]
+unique_name_in_owner = true
+margin_top = 307.0
+margin_right = 1024.0
+margin_bottom = 328.0
+custom_fonts/normal_font = SubResource( 12 )
+bbcode_enabled = true
+bbcode_text = "[center]Press Space to continue[/center]"
+text = "Press Space to continue"
+fit_content_height = true
