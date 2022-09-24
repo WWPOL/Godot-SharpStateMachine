@@ -33,6 +33,15 @@ public class VisualStateMachine : Node
     /// </summary>
     [Export]
     public bool Autostart = false;
+    
+    [Export]
+    public NodePath TargetPath {
+        get => _targetPath;
+        set {
+            _targetPath = value;
+            Machine?.SetupDelegates(this);
+        }
+    }
 
     /// <summary>
     /// The current state of the machine, or null if it is not set.
@@ -46,11 +55,14 @@ public class VisualStateMachine : Node
             _currentState = value;
         }
     }
-    
+
+    public Node? TargetNode => TargetPath.IsEmpty() || !IsInsideTree() ? null : GetNode(TargetPath);
+
+    private NodePath _targetPath = new();
     private VfsmState? _currentState;
     
     public bool EditorProcess = false;
-    
+
     public override void _Ready()
     {
         if (Machine is null) {

@@ -7,3 +7,4 @@ resource_local_to_scene = true
 script = ExtResource( 1 )
 Kind = 1
 Duration = 0.5
+CheckFunction = ""

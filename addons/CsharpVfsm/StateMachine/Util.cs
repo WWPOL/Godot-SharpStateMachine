@@ -1,7 +1,13 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Linq;
+using System.Reflection;
+using System.Runtime.CompilerServices;
+
 using Godot;
+
+using static CsharpVfsmPlugin;
 
 using GodotDictionary = Godot.Collections.Dictionary;
 
@@ -42,6 +48,59 @@ public static class PluginUtil
             s += $"{e}:{(int)e}";
         }
         return s;
+    }
+
+    /// <summary>
+    /// LMAO.
+    /// </summary>
+    private static readonly HashSet<Type> ActionTypes = new() {
+        typeof(Action), typeof(Action<>), typeof(Action<,>), typeof(Action<,,>), typeof(Action<,,,>),
+        typeof(Action<,,,,>), typeof(Action<,,,,,>), typeof(Action<,,,,,,>)
+    };
+
+    private static bool TypeIsAction(Type t)
+        => ActionTypes.Contains(t) || (t.IsGenericType && ActionTypes.Contains(t.GetGenericTypeDefinition()));
+
+    /// <summary>
+    /// Attempt to retrieve a function reference to the method with the given <c>methodName</c> in the given
+    /// <c>targetNode</c>.
+    /// </summary>
+    /// <returns>
+    /// The delegate for the method, or <c>null</c> if the editor is currently running. This is to avoid throwing
+    /// unnecessary exceptions when using a <c>Tool</c> class in the editor. This function will not return <c>null</c>
+    /// during application runtime.
+    /// </returns>
+    /// <exception cref="ArgumentException">
+    /// The method is not found or has invalid parameters.
+    /// </exception>
+    public static T? GetMethodDelegateForNode<T>(Node targetNode, string methodName)
+        where T : Delegate
+    {
+        if (!TypeIsAction(typeof(T))) {
+            throw new InvalidOperationException("The delegate being created must be of type Action");
+        }
+        
+        var method = targetNode.GetType()
+            .GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
+            .FirstOrDefault(m => m.Name == methodName);
+        if (method is null) {
+            // Method with given name not found
+            if (Engine.EditorHint) {
+                // If the editor is running, we do not any information on non-Tool types. We don't want to throw
+                // errors when there isn't actually a problem, so let's just let the caller deal with it.
+                return null;
+            }
+
+            throw new ArgumentException($"Unable to find method \"{methodName}\"");
+        }
+
+        var generics = typeof(T).GetGenericArguments();
+        if (method.GetParameters().Count() != generics.Count()) {
+            // Arguments don't match
+            throw new ArgumentException($"Invalid parameters for method \"{methodName}\"");
+        }
+
+        return (T)Delegate.CreateDelegate(typeof(T), targetNode, methodName);
     }
 }
 

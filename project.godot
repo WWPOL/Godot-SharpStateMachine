@@ -11,6 +11,7 @@ config_version=4
 [application]
 
 config/name="CsharpVFSM"
+run/main_scene="res://Example/TestScene.tscn"
 config/icon="res://icon.png"
 
 [editor_plugins]

@@ -16,8 +16,6 @@ public class VfsmState : Resource
 
     public const string DefaultName = "State";
 
-#region Exports
-
     /// <summary>
     /// The name of the state. Each state in a machine must have a unique name.
     /// </summary>
@@ -31,19 +29,6 @@ public class VfsmState : Resource
                 EmitParentChanged();
                 PropertyListChangedNotify();
             }
-        }
-    }
-    
-    /// <summary>
-    /// The node which will be referenced when calling state functions such as <see cref="Process"/>.
-    /// </summary>
-    [ExportFake]
-    public NodePath TargetPath {
-        get => _targetPath;
-        set {
-            _targetPath = value;
-            EmitChanged();
-            PropertyListChangedNotify();
         }
     }
 
@@ -83,11 +68,8 @@ public class VfsmState : Resource
     protected List<VfsmTrigger> Triggers = new();
     
     private string _name = "State";
-    private NodePath _targetPath = "";
     private string _processFunction = "";
     private Vector2 _position = new(0, 0);
-
-#endregion
     
     /// <summary>
     /// Create a new state resource. Use this in place of a constructor, if necessary. Required due to Godot custom
@@ -96,38 +78,32 @@ public class VfsmState : Resource
     public static VfsmState Default()
         => (VfsmState)GD.Load<VfsmState>(PluginResourcePath("Resources/vfsm_state.tres")).Duplicate();
 
-    private Node? Target;
-
-    public virtual VfsmState Init()
+    public virtual VfsmState Init(VisualStateMachine machineNode)
     {
         PluginTraceEnter();
 
-        if (!TargetPath.IsEmpty() && !ProcessFunction.Empty() && GetLocalScene() is not null) {
-            Target = GetLocalScene().GetNode(TargetPath);
-            var methods = Target.GetType().GetMethods();
-            
-            PluginTrace($"{TargetPath}: {Target.GetType()}");
-
-            if (Target.GetType().GetMethods().Select(m => m.Name).Contains(ProcessFunction)) {
-                // Found the specified function
-                var parameters = methods.First(m => m.Name == ProcessFunction).GetParameters();
-                if (parameters.Count() != 1 || parameters[0].ParameterType != typeof(float)) {
-                    throw new InvalidOperationException($"Process function {ProcessFunction} (state \"{Name}\") has invalid arguments");
-                } 
-                
-                var method = Target.GetType().GetMethod(ProcessFunction)!;
-                Process = (Action<float>)Delegate.CreateDelegate(typeof(Action<float>), Target, method);
-            } else if (!Engine.EditorHint) {
-                // Couldn't find function and we're not in tool mode, so the function definitely doesn't exist.
-                throw new InvalidOperationException($"Process function \"{ProcessFunction}\" (state \"{Name}\") not found");
-            }
-        }
-        
-        // TODO OnEnter and OnLeave
+        SetupDelegates(machineNode);
         
         PluginTraceExit();
 
         return this;
+    }
+
+    public void SetupDelegates(VisualStateMachine machineNode)
+    {
+        if (!machineNode.TargetPath.IsEmpty() && !ProcessFunction.Empty()) {
+            var node = machineNode.TargetNode;
+            if (node is not null) {
+                Process = PluginUtil.GetMethodDelegateForNode<Action<float>>(
+                    node,
+                    ProcessFunction);
+            }
+
+            PluginTrace($"Set Process function for state \"{Name}\"");
+            // Remember that Process might still be null here.
+        }
+        
+        // TODO OnEnter and OnLeave
     }
 
     public Action<float>? Process { get; private set; }
@@ -180,16 +156,8 @@ public class VfsmState : Resource
                 Variant.Type.String
             ),
             PluginUtil.MakeProperty(
-                nameof(TargetPath),
-                Variant.Type.NodePath
-            ),
-            PluginUtil.MakeProperty(
                 nameof(ProcessFunction),
-                Variant.Type.String,
-                usage: TargetPath.IsEmpty() 
-                    ? PropertyUsageFlags.Storage
-                    : PropertyUsageFlags.Default
-            ),
+                Variant.Type.String),
             PluginUtil.MakeProperty(
                 nameof(Position),
                 Variant.Type.Vector2

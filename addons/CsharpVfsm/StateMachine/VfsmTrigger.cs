@@ -1,3 +1,5 @@
+using System;
+
 using Godot;
 
 using static CsharpVfsmPlugin;
@@ -26,6 +28,12 @@ public class VfsmTrigger : Resource
                 Variant.Type.Real,
                 Kind is TriggerKind.Timer 
                     ? PropertyUsageFlags.Default 
+                    : PropertyUsageFlags.Storage),
+            PluginUtil.MakeProperty(
+                nameof(CheckFunction),
+                Variant.Type.String,
+                Kind is TriggerKind.Condition
+                    ? PropertyUsageFlags.Default
                     : PropertyUsageFlags.Storage)
         };
     
@@ -56,11 +64,23 @@ public class VfsmTrigger : Resource
             PropertyListChangedNotify();
         }
     }
-    
+
+    public string CheckFunction {
+        get => _checkFunction;
+        set {
+            _checkFunction = value;
+            EmitChanged();
+            EmitParentChanged();
+            PropertyListChangedNotify();
+        }
+    }
+
     private int _kind = (int)TriggerKind.Timer;
     private float _duration = 0.5f;
+    private string _checkFunction = string.Empty;
 
     private float TimerTime = 0f;
+    private Func<bool>? CheckFunctionDelegate = null!;
 
     /// <summary>
     /// Create a new trigger resource. Use this in place of a constructor, if necessary. Required due to Godot
@@ -71,6 +91,15 @@ public class VfsmTrigger : Resource
     
     private VfsmTrigger()
     { }
+
+    public VfsmTrigger Init(VfsmState state)
+    {
+        if (Kind is TriggerKind.Condition) {
+            
+        }
+
+        return this;
+    }
     
     public void Update(float delta)
     {
@@ -78,6 +107,8 @@ public class VfsmTrigger : Resource
             TimerTime += delta;
             if (TimerTime >= Duration)
                 EmitSignal(nameof(Triggered));
+        } else if (Kind is TriggerKind.Condition) {
+             
         }
     }
     

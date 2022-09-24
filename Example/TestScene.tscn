@@ -1,55 +1,81 @@
-[gd_scene load_steps=11 format=2]
+[gd_scene load_steps=15 format=2]
 
 [ext_resource path="res://addons/CsharpVfsm/VisualStateMachine.cs" type="Script" id=1]
 [ext_resource path="res://addons/CsharpVfsm/StateMachine/VfsmStateMachine.cs" type="Script" id=2]
 [ext_resource path="res://addons/CsharpVfsm/StateMachine/VfsmState.cs" type="Script" id=3]
 [ext_resource path="res://addons/CsharpVfsm/StateMachine/VfsmStateSpecial.cs" type="Script" id=4]
 [ext_resource path="res://addons/CsharpVfsm/StateMachine/VfsmTrigger.cs" type="Script" id=5]
+[ext_resource path="res://Example/TestScene.cs" type="Script" id=6]
 
 [sub_resource type="Resource" id=4]
 resource_local_to_scene = true
 script = ExtResource( 5 )
 Kind = 1
 Duration = 2.0
+CheckFunction = ""
 
 [sub_resource type="Resource" id=2]
 resource_local_to_scene = true
 script = ExtResource( 3 )
-Name = "State"
-TargetPath = NodePath("")
-ProcessFunction = null
-Position = Vector2( -140, 440 )
+Name = "State1"
+ProcessFunction = "State_State1_Process"
+Position = Vector2( -60, 140 )
 Triggers = [ SubResource( 4 ) ]
 
 [sub_resource type="Resource" id=3]
 resource_local_to_scene = true
 script = ExtResource( 4 )
 SpecialKind = 1
-Position = Vector2( -320, 160 )
+Position = Vector2( -300, 120 )
+
+[sub_resource type="Resource" id=6]
+resource_local_to_scene = true
+script = ExtResource( 5 )
+Kind = 1
+Duration = 0.5
+CheckFunction = ""
 
 [sub_resource type="Resource" id=5]
 resource_local_to_scene = true
 script = ExtResource( 3 )
 Name = "State2"
-TargetPath = NodePath("")
+ProcessFunction = "State_State2_Process"
+Position = Vector2( 280, 140 )
+Triggers = [ SubResource( 6 ) ]
+
+[sub_resource type="Resource" id=7]
+resource_local_to_scene = true
+script = ExtResource( 5 )
+Kind = 1
+Duration = 0.5
+CheckFunction = ""
+
+[sub_resource type="Resource" id=8]
+resource_local_to_scene = true
+script = ExtResource( 3 )
+Name = "State"
 ProcessFunction = null
-Position = Vector2( 400, 140 )
-Triggers = [  ]
+Position = Vector2( 100, 440 )
+Triggers = [ SubResource( 7 ) ]
 
 [sub_resource type="Resource" id=1]
 resource_local_to_scene = true
 script = ExtResource( 2 )
-States = [ SubResource( 3 ), SubResource( 2 ), SubResource( 5 ) ]
+States = [ SubResource( 3 ), SubResource( 2 ), SubResource( 5 ), SubResource( 8 ) ]
 Transitions = {
-SubResource( 4 ): SubResource( 5 )
+SubResource( 6 ): SubResource( 8 ),
+SubResource( 4 ): SubResource( 5 ),
+SubResource( 7 ): SubResource( 2 )
 }
 EntryTransitionStates = [ SubResource( 2 ) ]
 
 [node name="Control" type="Control"]
 anchor_right = 1.0
 anchor_bottom = 1.0
+script = ExtResource( 6 )
 
 [node name="VisualStateMachine" type="Node" parent="."]
 script = ExtResource( 1 )
 Machine = SubResource( 1 )
+TargetPath = NodePath("..")
 Autostart = true

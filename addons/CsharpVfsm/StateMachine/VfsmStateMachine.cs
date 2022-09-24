@@ -100,14 +100,23 @@ public class VfsmStateMachine : Resource
         PluginTraceEnter();
 
         PluginTrace($"Initializing with {States.Count} states");
+
         foreach (var state in States) {
-            PluginTrace($"Adding state {state.Name}");
-            state.Init();
+            state.Init(machineNode);
             AttachChild(state, nameof(VfsmState.ParentChanged));
         }
         Transitions.Keys.ToList().ForEach(c => AttachChild(c, nameof(VfsmTrigger.ParentChanged)));
         
+        SetupDelegates(machineNode);
+        
         PluginTraceExit();
+    }
+
+    public void SetupDelegates(VisualStateMachine machineNode)
+    {
+        foreach (var state in States) {
+            state.SetupDelegates(machineNode);
+        }
     }
     
     /// <summary>
