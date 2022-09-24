@@ -92,15 +92,15 @@ public class VfsmTrigger : Resource
     private VfsmTrigger()
     { }
 
-    public VfsmTrigger Init(VfsmState state)
+    public VfsmTrigger Init(VisualStateMachine machineNode)
     {
         if (Kind is TriggerKind.Condition) {
-            
+            SetupDelegates(machineNode);
         }
 
         return this;
     }
-    
+
     public void Update(float delta)
     {
         if (Kind is TriggerKind.Timer) {
@@ -108,10 +108,23 @@ public class VfsmTrigger : Resource
             if (TimerTime >= Duration)
                 EmitSignal(nameof(Triggered));
         } else if (Kind is TriggerKind.Condition) {
-             
+            if (CheckFunctionDelegate is not null) {
+                if (CheckFunctionDelegate()) {
+                    EmitSignal(nameof(Triggered));
+                }
+            }
         }
     }
-    
+
+    public void SetupDelegates(VisualStateMachine machineNode, bool recurse = true)
+    {
+        if (CheckFunction.Empty() || machineNode.TargetNode is null) {
+            CheckFunctionDelegate = null;
+        } else {
+            CheckFunctionDelegate = PluginUtil.GetMethodDelegateForNode<Func<bool>>(machineNode.TargetNode, CheckFunction);
+        }
+    }
+
     /// <summary>
     /// Resets the internal state of this node to its defaults.
     /// </summary>

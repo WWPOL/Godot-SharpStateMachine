@@ -82,13 +82,10 @@ public class VisualStateMachine : Node
         if (Engine.EditorHint && !EditorProcess)
             return;
 
-        void ProcessMachineState() {
-            if (CurrentState is null)
-                return;
-                
+        if (CurrentState is not null) {
             if (CurrentState is VfsmStateSpecial special) {
-                if (special.SpecialKind is VfsmStateSpecial.Kind.Entry
-                    && Machine.EntryTransitionState is not null) {
+                if (special.SpecialKind is VfsmStateSpecial.Kind.Entry && Machine.EntryTransitionState is not null) {
+                    // Immediately move to the next state.
                     ChangeToState(Machine.EntryTransitionState);
                     return;
                 }
@@ -98,8 +95,6 @@ public class VisualStateMachine : Node
 
             CurrentState.UpdateTriggers(delta);
         }
-        
-        ProcessMachineState();
     }
 
     private void On_StateTransitionTriggered(VfsmTrigger trigger)
@@ -152,17 +147,13 @@ public class VisualStateMachine : Node
                 trigger.Reset();
             }
 
-            if (CurrentState.OnLeave is not null) {
-                CurrentState.OnLeave();
-            }
+            CurrentState.OnLeave?.Invoke();
         }
         
         // Do the transition.
         var previousState = CurrentState;
         CurrentState = to; 
-        if (CurrentState.OnEnter is not null) {
-            CurrentState.OnEnter();
-        }
+        CurrentState.OnEnter?.Invoke();
         
         if (CurrentState is not VfsmStateSpecial) {
             // Attach to next state's triggers.

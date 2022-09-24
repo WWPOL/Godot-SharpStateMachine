@@ -82,21 +82,20 @@ public class VfsmState : Resource
     {
         PluginTraceEnter();
 
-        SetupDelegates(machineNode);
+        Triggers.ForEach(t => t.Init(machineNode));
+        SetupDelegates(machineNode, false);
         
         PluginTraceExit();
 
         return this;
     }
 
-    public void SetupDelegates(VisualStateMachine machineNode)
+    public void SetupDelegates(VisualStateMachine machineNode, bool recurse = true)
     {
-        if (!machineNode.TargetPath.IsEmpty() && !ProcessFunction.Empty()) {
+        if (machineNode.TargetNode is not null && !ProcessFunction.Empty()) {
             var node = machineNode.TargetNode;
             if (node is not null) {
-                Process = PluginUtil.GetMethodDelegateForNode<Action<float>>(
-                    node,
-                    ProcessFunction);
+                Process = PluginUtil.GetMethodDelegateForNode<Action<float>>(node, ProcessFunction);
             }
 
             PluginTrace($"Set Process function for state \"{Name}\"");
@@ -104,6 +103,12 @@ public class VfsmState : Resource
         }
         
         // TODO OnEnter and OnLeave
+
+        if (recurse) {
+            foreach (var trigger in Triggers) {
+                trigger.SetupDelegates(machineNode);
+            }
+        }
     }
 
     public Action<float>? Process { get; private set; }

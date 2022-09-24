@@ -46,16 +46,16 @@ Triggers = [ SubResource( 6 ) ]
 [sub_resource type="Resource" id=7]
 resource_local_to_scene = true
 script = ExtResource( 5 )
-Kind = 1
+Kind = 2
 Duration = 0.5
-CheckFunction = ""
+CheckFunction = "State_State3_CheckAdvance"
 
 [sub_resource type="Resource" id=8]
 resource_local_to_scene = true
 script = ExtResource( 3 )
 Name = "State"
 ProcessFunction = null
-Position = Vector2( 100, 440 )
+Position = Vector2( 120, 400 )
 Triggers = [ SubResource( 7 ) ]
 
 [sub_resource type="Resource" id=1]

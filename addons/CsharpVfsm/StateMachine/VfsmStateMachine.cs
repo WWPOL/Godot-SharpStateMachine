@@ -112,10 +112,12 @@ public class VfsmStateMachine : Resource
         PluginTraceExit();
     }
 
-    public void SetupDelegates(VisualStateMachine machineNode)
+    public void SetupDelegates(VisualStateMachine machineNode, bool recurse = true)
     {
-        foreach (var state in States) {
-            state.SetupDelegates(machineNode);
+        if (recurse) {
+            foreach (var state in States) {
+                state.SetupDelegates(machineNode);
+            }
         }
     }
     

@@ -1,9 +1,20 @@
+using System;
+using System.Threading;
+
 using Godot;
+
+using static CsharpVfsmPlugin;
 
 [Tool]
 public class VfsmStateNodeConnection : PanelContainer
 {
     [Signal] public delegate void DeleteRequested();
+
+    private static readonly Lazy<StreamTexture> TimerIcon = new(
+        () => GD.Load<StreamTexture>(PluginResourcePath("Assets/timer.svg")));
+
+    private static readonly Lazy<StreamTexture> FunctionIcon = new(
+        () => GD.Load<StreamTexture>(PluginResourcePath("Assets/check_function.svg")));
 
     private Button DeleteButton = null!;
     private Button InspectButton = null!; 
@@ -31,9 +42,18 @@ public class VfsmStateNodeConnection : PanelContainer
     
     public void Redraw()
     {
-        if (Trigger.Kind is VfsmTrigger.TriggerKind.Timer) {
-            InspectButton.Text = $"{Trigger.Duration}s";
-        }
+        InspectButton.Text = Trigger.Kind switch {
+            VfsmTrigger.TriggerKind.Timer => $"{Trigger.Duration}s",
+            VfsmTrigger.TriggerKind.Condition => Trigger.CheckFunction,
+            _ => null
+        };
+        
+        InspectButton.Icon = Trigger.Kind switch
+        {
+            VfsmTrigger.TriggerKind.Timer => TimerIcon.Value,
+            VfsmTrigger.TriggerKind.Condition => FunctionIcon.Value,
+            _ => null
+        };
     }
     
     private void On_DeleteButton_Pressed()

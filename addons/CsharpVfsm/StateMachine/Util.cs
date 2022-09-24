@@ -50,16 +50,21 @@ public static class PluginUtil
         return s;
     }
 
-    /// <summary>
-    /// LMAO.
-    /// </summary>
     private static readonly HashSet<Type> ActionTypes = new() {
         typeof(Action), typeof(Action<>), typeof(Action<,>), typeof(Action<,,>), typeof(Action<,,,>),
         typeof(Action<,,,,>), typeof(Action<,,,,,>), typeof(Action<,,,,,,>)
     };
 
+    private static readonly HashSet<Type> FunctionTypes = new() {
+        typeof(Func<>), typeof(Func<,>), typeof(Func<,,>), typeof(Func<,,,>),
+        typeof(Func<,,,,>), typeof(Func<,,,,,>), typeof(Func<,,,,,,>)
+    };
+
     private static bool TypeIsAction(Type t)
         => ActionTypes.Contains(t) || (t.IsGenericType && ActionTypes.Contains(t.GetGenericTypeDefinition()));
+
+    private static bool TypeIsFunc(Type t)
+        => FunctionTypes.Contains(t) || (t.IsGenericType && FunctionTypes.Contains(t.GetGenericTypeDefinition()));
 
     /// <summary>
     /// Attempt to retrieve a function reference to the method with the given <c>methodName</c> in the given
@@ -76,13 +81,18 @@ public static class PluginUtil
     public static T? GetMethodDelegateForNode<T>(Node targetNode, string methodName)
         where T : Delegate
     {
-        if (!TypeIsAction(typeof(T))) {
-            throw new InvalidOperationException("The delegate being created must be of type Action");
+        if (targetNode is null) {
+            throw new ArgumentNullException(nameof(targetNode));
+        }
+        
+        if (!TypeIsAction(typeof(T)) && !TypeIsFunc(typeof(T))) {
+            throw new InvalidOperationException("The delegate being created must be of type Action or Func");
         }
         
         var method = targetNode.GetType()
             .GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
             .FirstOrDefault(m => m.Name == methodName);
+        
         if (method is null) {
             // Method with given name not found
             if (Engine.EditorHint) {
@@ -91,13 +101,34 @@ public static class PluginUtil
                 return null;
             }
 
-            throw new ArgumentException($"Unable to find method \"{methodName}\"");
+            throw new ArgumentException($"Unable to find method \"{methodName}\" in node \"{targetNode.Name}\"");
         }
 
-        var generics = typeof(T).GetGenericArguments();
-        if (method.GetParameters().Count() != generics.Count()) {
-            // Arguments don't match
-            throw new ArgumentException($"Invalid parameters for method \"{methodName}\"");
+        if (TypeIsAction(typeof(T))) {
+            var generics = typeof(T).GetGenericArguments();
+            if (method.GetParameters().Count() != generics.Count()
+                || method.GetParameters()
+                    .Zip(generics, (p, t) => (p, t))
+                    .Any(pair => pair.p.ParameterType != pair.t)) {
+                // Arguments don't match
+                throw new ArgumentException($"Invalid parameters for method \"{methodName}\"");
+            }
+        } else if (TypeIsFunc(typeof(T))) {
+            var generics = typeof(T).GetGenericArguments();
+            if (generics.Any()) {
+                var ret = generics[0];
+                var args = generics.Skip(1).ToList();
+
+                if (method.ReturnType != ret) {
+                    throw new ArgumentException($"Invalid return type for method \"{methodName}\"");
+                }
+
+                if (method.GetParameters()
+                    .Zip(args, (p, t) => (p, t))
+                    .Any(pair => pair.p.ParameterType != pair.t)) {
+                    throw new ArgumentException($"Invalid parameter types for method \"{methodName}\"");
+                }
+            }
         }
 
         return (T)Delegate.CreateDelegate(typeof(T), targetNode, methodName);
