@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 
 using Godot;
 
@@ -95,6 +96,18 @@ public class VisualStateMachine : Node
 
             CurrentState.UpdateTriggers(delta);
         }
+    }
+
+    public override string _GetConfigurationWarning()
+    {
+        var clashes = Machine.GetClashingNames();
+        if (clashes.Any()) {
+            return
+                $"There are multiple nodes named \"{clashes.First().Item1.Name}\"."
+                + "This will produce an error at runtime.";
+        }
+
+        return string.Empty;
     }
 
     private void On_StateTransitionTriggered(VfsmTrigger trigger)

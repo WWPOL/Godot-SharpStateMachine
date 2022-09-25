@@ -156,7 +156,6 @@ public class VfsmGraphEdit : GraphEdit
         PluginTrace("Drawing transitions");
         
         // Draw state transition connections.
-        PluginTrace($"{entryNode} {entryTransitionTarget}");
         if (entryNode is not null && entryTransitionTarget is not null) {
             ConnectNode(entryNode.Name, 0, entryTransitionTarget.Name, 0);
         }

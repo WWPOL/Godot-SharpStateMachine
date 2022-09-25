@@ -35,26 +35,13 @@ slot/0/left_color = Color( 1, 1, 1, 1 )
 slot/0/right_enabled = false
 slot/0/right_type = 0
 slot/0/right_color = Color( 1, 1, 1, 1 )
-slot/1/left_enabled = false
-slot/1/left_type = 0
-slot/1/left_color = Color( 1, 1, 1, 1 )
-slot/1/right_enabled = false
-slot/1/right_type = 0
-slot/1/right_color = Color( 1, 1, 1, 1 )
 script = ExtResource( 1 )
-
-[node name="NameEdit" type="LineEdit" parent="."]
-margin_left = 30.0
-margin_top = 30.0
-margin_right = 230.0
-margin_bottom = 54.0
-text = "StateName"
 
 [node name="NewTriggerButton" type="Button" parent="."]
 margin_left = 30.0
-margin_top = 64.0
+margin_top = 30.0
 margin_right = 230.0
-margin_bottom = 90.0
+margin_bottom = 56.0
 text = "Add trigger"
 icon = ExtResource( 2 )
 clip_text = true

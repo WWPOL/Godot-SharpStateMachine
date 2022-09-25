@@ -14,7 +14,6 @@ public class VfsmStateNode : StateNode
 
     private static StyleBoxFlat StyleBoxSelected = null!;
     
-    private LineEdit NameEdit = null!;
     private Button NewTriggerButton = null!;
 
     private VfsmStateMachine Machine = null!;
@@ -44,10 +43,8 @@ public class VfsmStateNode : StateNode
     {
         base._Ready();
 
-        NameEdit = GetNode<LineEdit>("NameEdit");
         NewTriggerButton = GetNode<Button>("NewTriggerButton");
 
-        NameEdit.Connect("text_entered", this, nameof(On_NameEdit_TextEntered));
         NewTriggerButton.Connect("pressed", this, nameof(On_NewTriggerButton_Pressed));
         
         State.Connect("changed", this, nameof(Redraw));
@@ -56,9 +53,8 @@ public class VfsmStateNode : StateNode
     /// Populates the contents of this control.
     public override void Redraw()
     {
-        // Update name
-        NameEdit.Text = State.Name; 
-
+        Title = State.Name;
+        
         // Clear slot nodes
         foreach (var child in this.GetChildNodes().Where(n => n.IsInGroup(VfsmConnectionNodeGroup))) {
             DetachConnectionNode((VfsmStateNodeConnection)child);
@@ -68,17 +64,28 @@ public class VfsmStateNode : StateNode
     
         // Add new connection nodes for our triggers
         var connectionScene = GD.Load<PackedScene>(PluginResourcePath("Editor/VfsmStateNodeConnection.tscn"));
-        Node belowNode = NameEdit;
+        Node? belowNode = null;
         foreach (var trigger in State.GetTriggers()) {
             var connectionNode = connectionScene.Instance<VfsmStateNodeConnection>()
                 .Init(trigger);
 
             AttachConnectionNode(connectionNode);
 
-            AddChildBelowNode(belowNode, connectionNode);
+            if (belowNode is null) {
+                AddChild(connectionNode);
+            } else {
+                AddChildBelowNode(belowNode, connectionNode);
+            }
+
             belowNode = connectionNode;
         }
         
+        if (belowNode is not null) {
+            // Move the "add" button to the bottom
+            RemoveChild(NewTriggerButton);
+            AddChildBelowNode(belowNode, NewTriggerButton);
+        }
+
         // Set slot data.
         foreach (var (node, i) in this.GetChildNodes().Select((n, i) => (n, i))) {
             if (node.IsInGroup(VfsmConnectionNodeGroup)) {

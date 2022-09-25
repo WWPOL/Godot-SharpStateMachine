@@ -20,7 +20,7 @@ resource_local_to_scene = true
 script = ExtResource( 3 )
 Name = "State1"
 ProcessFunction = "State_State1_Process"
-Position = Vector2( -60, 140 )
+Position = Vector2( -40, 140 )
 Triggers = [ SubResource( 4 ) ]
 
 [sub_resource type="Resource" id=3]
@@ -41,7 +41,7 @@ resource_local_to_scene = true
 script = ExtResource( 3 )
 Name = "State2"
 ProcessFunction = "State_State2_Process"
-Position = Vector2( 280, 140 )
+Position = Vector2( 300, 140 )
 Triggers = [ SubResource( 6 ) ]
 
 [sub_resource type="Resource" id=7]
@@ -56,7 +56,7 @@ resource_local_to_scene = true
 script = ExtResource( 3 )
 Name = "State3"
 ProcessFunction = null
-Position = Vector2( 120, 400 )
+Position = Vector2( 0, 600 )
 Triggers = [ SubResource( 7 ) ]
 
 [sub_resource type="Resource" id=1]
@@ -64,9 +64,9 @@ resource_local_to_scene = true
 script = ExtResource( 2 )
 States = [ SubResource( 3 ), SubResource( 2 ), SubResource( 5 ), SubResource( 8 ) ]
 Transitions = {
-SubResource( 6 ): SubResource( 8 ),
 SubResource( 4 ): SubResource( 5 ),
-SubResource( 7 ): SubResource( 2 )
+SubResource( 7 ): SubResource( 2 ),
+SubResource( 6 ): SubResource( 8 )
 }
 EntryTransitionStates = [ SubResource( 2 ) ]
 

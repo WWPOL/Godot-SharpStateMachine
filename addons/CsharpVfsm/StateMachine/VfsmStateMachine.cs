@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
@@ -8,6 +9,8 @@ using GodotArray = Godot.Collections.Array;
 
 using static CsharpVfsmPlugin;
 using static PluginUtil;
+
+using Object = Godot.Object;
 
 /// <summary>
 /// The static data of a state machine, including states and transitions.
@@ -264,21 +267,10 @@ public class VfsmStateMachine : Resource
     {
         var removals = Transitions.Keys.Where(trigger => !ValidateTransition(trigger, Transitions[trigger]));
         removals.ToList().ForEach(t => RemoveTransition(t));
-        
-        // Ensure all names are valid and not duplicate
-        var names = new List<string>();
-        foreach (var state in GetStates()) {
-            if (!VfsmState.ValidateStateName(state.Name)) {
-                state.Name = VfsmState.DefaultName;
-            }
-            
-            // Add an incrementing number to duplicate names.
-            const string suffix = "2";
-            while (names.Contains(state.Name)) {
-                state.Name += suffix;
-            }
-            
-            names.Add(state.Name);
+
+        if (!Engine.EditorHint && GetClashingNames().Any()) {
+            throw new InvalidOperationException(
+                $"There are multiple states named \"{GetClashingNames().First().Item1.Name}\"");
         }
     }
 
@@ -310,7 +302,23 @@ public class VfsmStateMachine : Resource
         
         return true;
     }
-    
+
+    public List<(VfsmState, VfsmState)> GetClashingNames()
+    {
+        var states = new List<VfsmState>();
+        var clashes = new List<(VfsmState, VfsmState)>();
+        foreach (var state in States) {
+            var clash = states.FirstOrDefault(s => s.Name == state.Name);
+            if (clash is not null) {
+                clashes.Add((clash, state));
+            }
+            
+            states.Add(state); 
+        }
+
+        return clashes;
+    }
+
     private VfsmTrigger? StateInboundConnection(VfsmState state)
     {
         return GetStates()
